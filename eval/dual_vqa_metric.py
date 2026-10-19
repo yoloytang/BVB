@@ -113,6 +113,15 @@ def sample_frames_b64(video: Path, n: int) -> list[str]:
     return out
 
 
+def format_question(qa: dict[str, Any]) -> str:
+    """Include answer choices in metadata order, without exposing the answer key."""
+    question = str(qa["question"])
+    options = qa.get("options")
+    if options:
+        question += "\n\nOptions:\n" + "\n".join(str(option) for option in options)
+    return question
+
+
 def ask_vlm(
     client: OpenAI,
     *,
@@ -218,7 +227,7 @@ def ensure_originals(
         qa_id, qa, video = item
         frames = sample_frames_b64(video, n_frames)
         answer, usage = ask_vlm(
-            client, model=model, question=str(qa["question"]), frames_b64=frames
+            client, model=model, question=format_question(qa), frames_b64=frames
         )
         row = make_answer_row(
             qa_id=qa_id,
@@ -270,7 +279,7 @@ def ensure_text_only(
     def worker(item: tuple[str, dict[str, Any]]) -> dict[str, Any]:
         qa_id, qa = item
         answer, usage = ask_vlm(
-            client, model=model, question=str(qa["question"]), frames_b64=None
+            client, model=model, question=format_question(qa), frames_b64=None
         )
         row = make_answer_row(
             qa_id=qa_id,
@@ -357,7 +366,7 @@ def score_run(
             answer, usage = ask_vlm(
                 client,
                 model=model,
-                question=str(qa["question"]),
+                question=format_question(qa),
                 frames_b64=frames,
             )
             rendered_correct = semantic_correct(answer, qa)
