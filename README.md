@@ -30,9 +30,8 @@ limit. External asset libraries are not allowed.
 
 ## Updates
 
-- **2026-10-19 ⚠️ For users evaluating their own models:** We fixed missing multiple-choice options in Dual VQA evaluation. Please update [`eval/dual_vqa_metric.py`](eval/dual_vqa_metric.py) and re-download [`_dual_vqa_shared/original_answers.jsonl`](https://huggingface.co/datasets/yunlong10/BVB-results/blob/main/_dual_vqa_shared/original_answers.jsonl).
-- **[10/17/2026]** Added DeepSeek V4.1 Flash 1017 (max) to the
-  [leaderboard](https://yoloytang.me/BVB/#leaderboard).
+- **2026-10-19 ⚠️ For users evaluating their own models:** We fixed missing multiple-choice options in Dual VQA evaluation. Please update [`dual_vqa_metric.py`](eval/dual_vqa_metric.py) and re-download [`original_answers.jsonl`](https://huggingface.co/datasets/yunlong10/BVB-results/blob/main/_dual_vqa_shared/original_answers.jsonl).
+- **[10/17/2026]** Added [DeepSeek V4.1 Flash 1017](https://x.com/yoloytang/status/2111607426495795668?s=20) (max) to the [leaderboard](https://yoloytang.me/BVB/#leaderboard).
 - **[10/13/2026]** Added Muse Wonder (xhigh), Claude Haiku 5.5 (xhigh), Grok 4.7 (xhigh), DeepSeek V4.1 Flash (max), and Gemini 4 Argon (high)
   to the [leaderboard](https://yoloytang.me/BVB/#leaderboard).
 - **[9/30/2026]** Added GPT-6.1 Sol (xhigh) and Claude Sonnet 5.5 (xhigh) to the
