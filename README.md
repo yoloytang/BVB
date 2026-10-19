@@ -28,8 +28,9 @@ limit. External asset libraries are not allowed.
   <em>Source kitchen video and its GPT-6 Astra reconstruction.</em>
 </p>
 
-## News
+## Updates
 
+- **2026-10-19 ⚠️ For users evaluating their own models:** We fixed missing multiple-choice options in Dual VQA evaluation. Please update the evaluation code and re-download [`_dual_vqa_shared/original_answers.jsonl`](https://huggingface.co/datasets/yunlong10/BVB-results/blob/main/_dual_vqa_shared/original_answers.jsonl).
 - **[10/17/2026]** Added DeepSeek V4.1 Flash 1017 (max) to the
   [leaderboard](https://yoloytang.me/BVB/#leaderboard).
 - **[10/13/2026]** Added Muse Wonder (xhigh), Claude Haiku 5.5 (xhigh), Grok 4.7 (xhigh), DeepSeek V4.1 Flash (max), and Gemini 4 Argon (high)
