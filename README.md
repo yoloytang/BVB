@@ -41,6 +41,7 @@ limit. External asset libraries are not allowed.
   [leaderboard](https://yoloytang.me/BVB/#leaderboard).
 - **[9/14/2026]** We released the BVB [paper](https://arxiv.org/abs/2609.15478)
   and [leaderboard](https://yoloytang.me/BVB/#leaderboard).
+  Fun fact: We started this project in Feb. 2026. It was Astra that delayed our release by a week.
 
 ## Overview
 
