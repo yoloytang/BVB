@@ -276,9 +276,9 @@
 
   // ---------------------------------------------------------------------
   // Facts derived from the data, so the prose follows the leaderboard.
-  const providerCount = new Set(data.map((r) => r.vendor)).size;
-  const lsAbove = data.filter((r) => r.latentSim > r.dualVqa).length;
   function writeFacts() {
+    const providerCount = new Set(data.map((r) => r.vendor)).size;
+    const lsAbove = data.filter((r) => r.latentSim > r.dualVqa).length;
     $("overview-count").textContent = `The leaderboard covers ${data.length} configurations from ${providerCount} providers on all 288 test videos. It is updated as new models are evaluated.`;
     const gaps = data.map((r) => r.latentSim - r.dualVqa);
     const bestDv = Math.max(...data.map((r) => r.dualVqa));
@@ -300,17 +300,20 @@
   writeFacts();
 
   // ---------------------------------------------------------------------
-  // Column chart of scores by model
+  // Column chart of scores or reconstruction cost by model
   let barsAxis = "overall",
-    barsView = "best";
+    barsView = "best",
+    costScale = "log";
   function barRows() {
     let rows = data;
     if (barsView === "best") {
+      // Compare the cost of each model's best-performing configuration.
+      const selectionAxis = barsAxis === "costUsd" ? "overall" : barsAxis;
       const best = new Map();
       for (const r of data) {
         const k = `${r.family}|${r.harness}`;
         const b = best.get(k);
-        if (!b || r[barsAxis] > b[barsAxis]) best.set(k, r);
+        if (!b || r[selectionAxis] > b[selectionAxis]) best.set(k, r);
       }
       rows = [...best.values()];
     }
@@ -366,11 +369,13 @@
   }
   function renderBars() {
     const C = palette();
+    const isCost = barsAxis === "costUsd";
+    const isLog = isCost && costScale === "log";
     const rows = barRows();
     const n = rows.length;
     const L = 36,
       R = 4,
-      T = 22,
+      T = isCost ? 52 : 22,
       plotH = 300;
     // Rotated labels hang to the left of their bar, so reserve room for
     // the first few before the plot starts.
@@ -389,29 +394,44 @@
     // differences between models stay visible. A break mark shows the cut.
     const max = Math.max(...rows.map((r) => r[barsAxis]));
     const min = Math.min(...rows.map((r) => r[barsAxis]));
-    const yMax = Math.ceil((max + 3) / 5) * 5;
-    const yMin = Math.max(0, Math.floor((min - 3) / 10) * 10);
-    const yStep = yMax - yMin <= 40 ? 5 : 10;
-    const y = (v) => T + plotH - ((v - yMin) / (yMax - yMin)) * plotH;
+    const costStep = max <= 1 ? 0.2 : 0.5;
+    const yMax = isCost
+      ? Math.max(costStep, Math.ceil(max * 1.08 / costStep) * costStep)
+      : Math.ceil((max + 3) / 5) * 5;
+    const yMin = isLog ? 10 ** Math.floor(Math.log10(min))
+      : isCost ? 0 : Math.max(0, Math.floor((min - 3) / 10) * 10);
+    const yStep = isCost ? costStep : yMax - yMin <= 40 ? 5 : 10;
+    const scaleValue = isLog ? Math.log10 : (v) => v;
+    const y = (v) => T + plotH - ((scaleValue(v) - scaleValue(yMin)) / (scaleValue(yMax) - scaleValue(yMin))) * plotH;
+    const ticks = [];
+    if (isLog) {
+      for (let e = Math.floor(Math.log10(yMin)); e <= Math.ceil(Math.log10(yMax)); e++)
+        for (const m of [1, 2, 5]) {
+          const v = m * 10 ** e;
+          if (v >= yMin && v <= yMax) ticks.push(v);
+        }
+    } else {
+      for (let t = yMin; t <= yMax; t += yStep) ticks.push(t);
+    }
     const base = T + plotH;
     const X0 = padLeft + L;
-    const valueSize = pitch < 34 ? 10.5 : 12;
+    const valueSize = isCost || pitch < 34 ? 10.5 : 12;
     const svg = [];
     const drawBar = (path, col) => `<path class="bar-body" d="${path}" fill="${col}"/>`;
     svg.push(
       `<svg xmlns="${svgNS}" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" role="group" aria-label="${escape(
-        `${axisNames[barsAxis]} by ${barsView === "best" ? "model" : "configuration"}, ${n} bars, sorted from highest to lowest. The axis starts at ${yMin}. Use the arrow keys to move between bars.`,
+        `${axisNames[barsAxis]}${isCost ? ` in US dollars, ${isLog ? "logarithmic" : "linear"} scale` : ""} by ${barsView === "best" ? "model" : "configuration"}, ${n} bars, sorted from highest to lowest. The axis starts at ${yMin}. Use the arrow keys to move between bars.`,
       )}">`,
     );
     svg.push(barPaintDefs());
-    for (let t = yMin; t <= yMax; t += yStep) {
+    for (const t of ticks) {
       svg.push(
         `<line x1="${X0}" x2="${W - R}" y1="${y(t)}" y2="${y(t)}" stroke="${
           t === yMin ? C.axis : C.grid
-        }" stroke-width="1"/><text x="${X0 - (yMin > 0 && t === yMin ? 24 : 12)}" y="${y(t) + 4}" text-anchor="end" font-size="12" fill="${C.muted}">${t}</text>`,
+        }" stroke-width="1"/><text x="${X0 - (!isCost && yMin > 0 && t === yMin ? 24 : 12)}" y="${y(t) + 4}" text-anchor="end" font-size="12" fill="${C.muted}">${isCost ? `$${t.toFixed(2)}` : t}</text>`,
       );
     }
-    if (yMin > 0)
+    if (yMin > 0 && !isCost)
       svg.push(
         `<line x1="${X0 - 18}" x2="${X0}" y1="${base}" y2="${base}" stroke="${C.axis}"/><path d="M${X0 - 16},${base + 4} l3,-8 l3,8 l3,-8" fill="none" stroke="${C.muted}" stroke-width="1.2" style="paint-order:stroke" aria-hidden="true"/>`,
       );
@@ -426,15 +446,15 @@
       const paint = barPaint(r.vendor);
       const isWhale = r.vendor === "DeepSeek";
       const iconSize = isWhale ? 20 : 16;
-      const label = `${configName(r)}. ${axisNames[barsAxis]} ${score(v, barsAxis === "overall" ? 2 : 1)}.`;
+      const label = `${configName(r)}. ${axisNames[barsAxis]} ${isCost ? money(v) : score(v, barsAxis === "overall" ? 2 : 1)}.`;
       svg.push(
         `<g class="bar-col" data-run="${escape(r.run)}" tabindex="${i === 0 ? 0 : -1}" role="img" aria-label="${escape(label)}">` +
           `<rect class="hit" x="${cx - pitch / 2}" y="${T - 18}" width="${pitch}" height="${plotH + 18 + 34}" rx="3"/>` +
-          (isWhale
+          (isWhale && h >= 24
             ? deepseekWaterBar(cx, top, base, barW, iconSize)
             : drawBar(path, paint.body) +
               `<rect class="bar-cap" x="${x0}" y="${top}" width="${barW}" height="${Math.min(2, h)}" fill="${paint.cap}" aria-hidden="true"/>`) +
-          `<text x="${cx}" y="${top - 6}" text-anchor="middle" font-size="${valueSize}" font-weight="600" fill="${C.ink}">${score(v, 1)}</text>` +
+          `<text x="${cx}" y="${top - 6}" text-anchor="${isCost ? "start" : "middle"}"${isCost ? ` transform="rotate(-45 ${cx} ${top - 6})"` : ""} font-size="${valueSize}" font-weight="600" fill="${C.ink}">${isCost ? money(v) : score(v, 1)}</text>` +
           (src
             ? `<image href="${escape(src)}" x="${cx - iconSize / 2}" y="${base + (isWhale ? 7 : 9)}" width="${iconSize}" height="${iconSize}" aria-hidden="true"/>`
             : "") +
@@ -447,7 +467,13 @@
     svg.push("</svg>");
     $("bar-chart").innerHTML = svg.join("");
     syncBarsScroll();
-    $("bars-sub").textContent = `${axisNames[barsAxis]} score of ${
+    $("cost-scale-control").hidden = !isCost;
+    $("bars-view").querySelector('option[value="best"]').textContent = isCost
+      ? "Best Overall configuration per model"
+      : "Best configuration per model";
+    $("bars-sub").textContent = isCost
+      ? `Mean reconstruction cost per scene (USD), ${barsView === "best" ? "using each model’s best Overall configuration" : `all ${n} configurations`}.`
+      : `${axisNames[barsAxis]} score of ${
       barsView === "best"
         ? `the configuration with the highest ${axisNames[barsAxis]} for each model`
         : `all ${n} configurations`
@@ -497,6 +523,10 @@
   );
   $("bars-view").addEventListener("change", () => {
     barsView = $("bars-view").value;
+    renderBars();
+  });
+  $("cost-scale").addEventListener("change", () => {
+    costScale = $("cost-scale").value;
     renderBars();
   });
   function syncBarsScroll() {

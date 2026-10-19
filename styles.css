@@ -760,6 +760,15 @@ h3 {
   align-items: center;
   gap: 12px 28px;
 }
+.leaderboard-heading {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px 24px;
+}
+.leaderboard-heading h2 {
+  margin: 0;
+}
 .view-switch {
   display: inline-flex;
   padding: 3px;

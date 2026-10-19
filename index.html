@@ -35,7 +35,7 @@
       rel="stylesheet"
       href="https://fonts.googleapis.com/css2?family=Archivo:wght@400..800&family=STIX+Two+Math&family=STIX+Two+Text:ital,wght@0,400..700;1,400..700&display=swap"
     />
-    <link rel="stylesheet" href="styles.css?v=c00481e71e7f" />
+    <link rel="stylesheet" href="styles.css?v=57849369668c" />
   <!-- Model logo assets: https://github.com/lobehub/lobe-icons
 MIT License
 
@@ -245,7 +245,13 @@ SOFTWARE.
       </section>
 
       <section class="section wrap" id="leaderboard" aria-labelledby="leaderboard-title">
-        <h2 id="leaderboard-title">Leaderboard</h2>
+        <div class="leaderboard-heading">
+          <h2 id="leaderboard-title">Leaderboard</h2>
+          <div class="view-switch js-only" role="group" aria-label="Leaderboard view">
+            <button type="button" data-view="chart" aria-pressed="true">Chart</button>
+            <button type="button" data-view="table" aria-pressed="false">Table</button>
+          </div>
+        </div>
         <div class="prose">
           <p>
             Each configuration is one model at one reasoning effort setting.
@@ -255,21 +261,25 @@ SOFTWARE.
         </div>
         <div class="board" id="board">
           <div class="board-top js-only">
-            <div class="view-switch" role="group" aria-label="Leaderboard view">
-              <button type="button" data-view="chart" aria-pressed="true">Chart</button>
-              <button type="button" data-view="table" aria-pressed="false">Table</button>
-            </div>
             <div class="chart-only chart-controls">
-              <div class="tabs" role="group" aria-label="Score shown in the chart">
+              <div class="tabs" role="group" aria-label="Metric shown in the chart">
                 <span class="tab-item"><button type="button" data-bars-axis="overall" aria-pressed="true">Overall</button><button type="button" class="tip-button js-only" data-tip="overall" aria-label="How Overall is computed"></button></span>
                 <span class="tab-item"><button type="button" data-bars-axis="dualVqa" aria-pressed="false">Dual VQA</button><button type="button" class="tip-button js-only" data-tip="dualVqa" aria-label="How Dual VQA is computed"></button></span>
                 <span class="tab-item"><button type="button" data-bars-axis="latentSim" aria-pressed="false">Latent Similarity</button><button type="button" class="tip-button js-only" data-tip="latentSim" aria-label="How Latent Similarity is computed"></button></span>
+                <span class="tab-item"><button type="button" data-bars-axis="costUsd" aria-pressed="false">Cost per scene</button><button type="button" class="tip-button js-only" data-tip="costUsd" aria-label="How cost is measured"></button></span>
               </div>
               <label class="select-inline">
                 <span class="sr-only">Configurations shown in the chart</span>
                 <select id="bars-view">
                   <option value="best">Best configuration per model</option>
                   <option value="all">All configurations</option>
+                </select>
+              </label>
+              <label class="select-inline" id="cost-scale-control" hidden>
+                <span class="sr-only">Cost scale</span>
+                <select id="cost-scale" aria-label="Cost scale">
+                  <option value="log" selected>Log scale</option>
+                  <option value="linear">Linear scale</option>
                 </select>
               </label>
             </div>
@@ -302,7 +312,7 @@ SOFTWARE.
           </div>
           <div class="chart-only chart-view">
             <p class="chart-sub" id="bars-sub">Overall score of the configuration with the highest Overall for each model on all 288 test scenes. Higher is better.</p>
-            <div class="bars-scroll" tabindex="0" role="region" aria-label="Bar chart of scores by model. Scroll sideways if it does not fit.">
+            <div class="bars-scroll" tabindex="0" role="region" aria-label="Bar chart by model. Scroll sideways if it does not fit.">
               <div id="bar-chart" class="bar-chart"></div>
             </div>
             <div class="bars-navigation">
@@ -412,11 +422,11 @@ SOFTWARE.
             <button type="button" class="text-button js-only table-only" id="toggle-rows" hidden aria-expanded="false" aria-controls="leaderboard-body">Show all configurations</button>
             <span class="table-only" id="result-count" role="status"></span>
             <span class="updated" id="updated-stamp">Leaderboard updated October 17, 2026</span>
-            <a class="text-button" href="results.csv" download="results.csv">Download CSV</a>
+            <a class="text-button" id="download-results" href="results.csv" download="BVB-results.csv">Download CSV</a>
           </div>
           <p class="footnote">
             Scores cover all 288 test scenes. Latent Similarity is the mean over
-            scenes, and Dual VQA pools the 1,827 questions the judge answers
+            scenes, and Dual VQA pools the <span id="source-correct-count">1,827</span> questions <span id="judge-name">GPT-5.4 Mini</span> answers
             correctly on the source videos. A scene with no renderable file
             scores zero on both axes.<span class="table-only"> Rank follows the
             sorted column over all configurations and does not change when you
@@ -687,11 +697,11 @@ SOFTWARE.
     </template>
     <template id="tip-costUsd">
       <p class="tip-title">Cost per scene</p>
-      <p>Mean agent spend per scene in US dollars during reconstruction. Every run has a cost limit of $3 per scene. Lower is better.</p>
+      <p>Mean agent spend per scene in US dollars during reconstruction. Every run has a cost limit of $3 per scene.</p>
     </template>
 
     <script src="data.js?v=3fa4d8f166aa"></script>
     <script src="gallery.js?v=9e59ed26eedf"></script>
-    <script src="app.js?v=ed6e6eb5be12"></script>
+    <script src="app.js?v=19cd51fd5b06"></script>
   </body>
 </html>
