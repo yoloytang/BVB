@@ -11,7 +11,7 @@
 
 <p align="center">
   <a href="https://yoloytang.me/BVB/#leaderboard">
-    <img src="assets/bvb-leaderboard.png?v=cb769088ebfc" alt="BVB Overall leaderboard: best configuration per model" width="1200">
+    <img src="assets/bvb-leaderboard.png?v=43c6327ae637" alt="BVB Overall leaderboard: best configuration per model" width="1200">
   </a>
 </p>
 
