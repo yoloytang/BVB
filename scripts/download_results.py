@@ -15,7 +15,7 @@ from pathlib import Path
 from huggingface_hub import snapshot_download
 
 
-DEFAULT_REPO_ID = "yunlong10/BVB-results"
+DEFAULT_REPO_ID = "yoloytang/BVB-results"
 DEFAULT_LOCAL_DIR = Path("sandbox/results")
 RETIRED_PATTERNS = [
     "*/unit_tests*.jsonl", "*/summary.json", "*/summary_*.json",
