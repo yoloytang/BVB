@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Upload Stage-2 eval artifacts to Hugging Face.
 
-Mirrors into the same run directories under yunlong10/BVB-results, alongside any
+Mirrors into the same run directories under yoloytang/BVB-results, alongside any
 existing Stage-1 config/agent_meta/blends files.
 
 Uploads the available two-axis scores:
@@ -20,7 +20,7 @@ from pathlib import Path
 
 from huggingface_hub import HfApi
 
-DEFAULT_REPO_ID = "yunlong10/BVB-results"
+DEFAULT_REPO_ID = "yoloytang/BVB-results"
 DEFAULT_RESULTS_DIR = Path("sandbox/results")
 EVAL_PATTERNS = [
     "vision_sim.jsonl",
