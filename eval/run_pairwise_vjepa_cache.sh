@@ -10,7 +10,7 @@ RESULTS="${ROOT}/sandbox/results"
 CACHE="${ROOT}/pairwise/features"
 OUTPUT="${ROOT}/pairwise/pairwise_vjepa_similarity.json"
 LOG_DIR="${ROOT}/pairwise/log"
-HF_REPO_ID="${HF_REPO_ID:-yunlong10/BVB-results}"
+HF_REPO_ID="${HF_REPO_ID:-yoloytang/BVB-results}"
 GPUS="${GPUS:-8}"
 
 mkdir -p "$CACHE" "$LOG_DIR"
