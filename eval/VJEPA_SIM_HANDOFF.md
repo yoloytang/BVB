@@ -39,7 +39,7 @@ python scripts/download_results.py --run run_001
 ```
 
 These transfer commands require `huggingface_hub` and access to
-`yunlong10/BVB-results`. Local file transfer works as well. They are not needed
+`yoloytang/BVB-results`. Local file transfer works as well. They are not needed
 when rendering and scoring on the same machine.
 
 ## 2. Encode on one GPU
