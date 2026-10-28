@@ -11,7 +11,7 @@
 
 <p align="center">
   <a href="https://yoloytang.me/BVB/#leaderboard">
-    <img src="assets/bvb-leaderboard.png?v=43c6327ae637" alt="BVB Overall leaderboard: best configuration per model" width="1200">
+    <img src="assets/bvb-leaderboard.png?v=7f9ee3e5d65d" alt="BVB Overall leaderboard: best configuration per model" width="1200">
   </a>
 </p>
 
@@ -30,6 +30,7 @@ limit. External asset libraries are not allowed.
 
 ## Updates
 
+- **[10/27/2026]** Added GPT-6.1 Terra (xhigh), Glimpse (max), and Nemotron 3.5 Super VL (max) to the [leaderboard](https://yoloytang.me/BVB/#leaderboard).
 - **[10/19/2026] ⚠️ For users evaluating their own models:** We fixed missing multiple-choice options in Dual VQA evaluation. Please use the latest [`dual_vqa_metric.py`](eval/dual_vqa_metric.py) and re-download [`original_answers.jsonl`](https://huggingface.co/datasets/yoloytang/BVB-results/blob/main/_dual_vqa_shared/original_answers.jsonl).
 - **[10/17/2026]** Added [DeepSeek V4.1 Flash 1017](https://x.com/yoloytang/status/2111607426495795668?s=20) (max) to the [leaderboard](https://yoloytang.me/BVB/#leaderboard).
 - **[10/13/2026]** Added Muse Wonder (xhigh), Claude Haiku 5.5 (xhigh), Grok 4.7 (xhigh), DeepSeek V4.1 Flash (max), and Gemini 4 Argon (high)
