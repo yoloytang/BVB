@@ -22,6 +22,7 @@ const esc = (v) =>
   String(v).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
 const score = (n, d = 1) => (Number.isFinite(n) ? n.toFixed(d) : "n/a");
 const money = (n) => Number.isFinite(n) ? `$${score(n, 3)}` : "n/a";
+const costCell = (r) => `<span${r.costScenes ? ` title="Mean over ${r.costScenes} recorded scenes."` : ""}>${money(r.costUsd)}</span>`;
 const logos = {
   OpenAI: "openai.svg",
   Meta: "meta.png",
@@ -69,7 +70,7 @@ const rows = ranked
         score(r.overall, 2),
       )}${cell("dualVqa", score(r.dualVqa))}${cell("latentSim", score(r.latentSim))}${cell(
         "costUsd",
-        money(r.costUsd),
+        costCell(r),
       )}</tr>`,
   )
   .join("\n");

@@ -20,6 +20,8 @@
   const score = (n, digits = 1) =>
     Number.isFinite(n) ? n.toFixed(digits) : "n/a";
   const money = (n) => Number.isFinite(n) ? `$${score(n, 3)}` : "n/a";
+  const costNote = (r) => r.costScenes ? `Mean over ${r.costScenes} recorded scenes.` : "";
+  const costCell = (r) => `<span${costNote(r) ? ` title="${costNote(r)}"` : ""}>${money(r.costUsd)}</span>`;
   const costRows = data.filter((r) => Number.isFinite(r.costUsd) && r.costUsd > 0);
 
   // Theme. The page follows the system setting until the reader picks one.
@@ -280,7 +282,7 @@
             k === "overall" ? 2 : 1,
           )}</dd>`,
       )
-      .join("")}<dt>Cost per scene</dt><dd>${money(r.costUsd)}</dd></dl>`;
+      .join("")}<dt>Cost per scene</dt><dd>${money(r.costUsd)}</dd>${r.costScenes ? `<dt>Cost records</dt><dd>${r.costScenes} scenes</dd>` : ""}</dl>`;
 
   // ---------------------------------------------------------------------
   // Facts derived from the data, so the prose follows the leaderboard.
@@ -455,7 +457,7 @@
       const paint = barPaint(r.vendor);
       const isWhale = r.vendor === "DeepSeek";
       const iconSize = isWhale ? 20 : 16;
-      const label = `${configName(r)}. ${axisNames[barsAxis]} ${isCost ? money(v) : score(v, barsAxis === "overall" ? 2 : 1)}.`;
+      const label = `${configName(r)}. ${axisNames[barsAxis]} ${isCost ? money(v) : score(v, barsAxis === "overall" ? 2 : 1)}.${isCost && costNote(r) ? ` ${costNote(r)}` : ""}`;
       svg.push(
         `<g class="bar-col" data-run="${escape(r.run)}" tabindex="${i === 0 ? 0 : -1}" role="img" aria-label="${escape(label)}">` +
           `<rect class="hit" x="${cx - pitch / 2}" y="${T - 18}" width="${pitch}" height="${plotH + 18 + 34}" rx="3"/>` +
@@ -628,7 +630,7 @@
         )}${cell(r, "latentSim", score(r.latentSim))}${cell(
           r,
           "costUsd",
-          money(r.costUsd),
+          costCell(r),
         )}</tr>`;
       })
       .join("");
@@ -736,7 +738,7 @@
       r.dualVqa,
     )}</dd></div><div><dt>Latent Similarity</dt><dd>${score(
       r.latentSim,
-    )}</dd></div><div><dt>Cost per scene</dt><dd>${money(r.costUsd)}</dd></div></dl>`;
+    )}</dd></div><div><dt>Cost per scene</dt><dd>${money(r.costUsd)}</dd></div>${r.costScenes ? `<div><dt>Cost records</dt><dd>${r.costScenes} scenes</dd></div>` : ""}</dl>`;
     document.querySelectorAll(".plot-point").forEach((p) => {
       const on = p.dataset.run === run;
       p.setAttribute("aria-pressed", String(on));
@@ -881,7 +883,7 @@
       const label = `${configName(r)}. ${axisNames[chartAxis]} ${score(
         r[chartAxis],
         chartAxis === "overall" ? 2 : 1,
-      )}. ${money(r.costUsd)} per scene.`;
+      )}. ${money(r.costUsd)} per scene. ${costNote(r)}`;
       s.push(
         `<g class="plot-point" data-run="${escape(r.run)}" tabindex="-1" role="button" aria-pressed="false" aria-label="${escape(
           label,

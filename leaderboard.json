@@ -1750,9 +1750,10 @@
       "route_planning": 54.54545454545455,
       "obj_appearance_order": 45.070422535211264
     },
-    "costUsd": null,
-    "runtimeMin": null,
-    "run": "mini-harness-nemotron-3.5-super-vl-reasoning-max-run01"
+    "costUsd": 0.12174301075268816,
+    "runtimeMin": 5.733572281959379,
+    "run": "mini-harness-nemotron-3.5-super-vl-reasoning-max-run01",
+    "costScenes": 279
   },
   {
     "rank": 66,
