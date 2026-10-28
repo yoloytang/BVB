@@ -19,7 +19,8 @@
     );
   const score = (n, digits = 1) =>
     Number.isFinite(n) ? n.toFixed(digits) : "n/a";
-  const money = (n) => `$${score(n, 3)}`;
+  const money = (n) => Number.isFinite(n) ? `$${score(n, 3)}` : "n/a";
+  const costRows = data.filter((r) => Number.isFinite(r.costUsd) && r.costUsd > 0);
 
   // Theme. The page follows the system setting until the reader picks one.
   const root = document.documentElement;
@@ -53,6 +54,8 @@
       MiniMax: "#ff4265",
       ByteDance: "#00c6e4",
       DeepSeek: "#4d6bfe",
+      NVIDIA: "#74B71B",
+      Elorian: "#30D75D",
     },
     dark: {
       OpenAI: "#e5e5e1",
@@ -66,6 +69,8 @@
       MiniMax: "#ff627f",
       ByteDance: "#13d2ec",
       DeepSeek: "#8096ff",
+      NVIDIA: "#96D443",
+      Elorian: "#30D75D",
     },
   };
 
@@ -85,11 +90,14 @@
     MiniMax: "minimax-color.svg",
     ByteDance: "seed.png",
     DeepSeek: "deepseek-color.svg",
+    NVIDIA: "nvidia-color.svg",
+    Elorian: "elorian.svg",
   };
   // Dark single-color marks, which need a light version on the dark page.
   const monoLogos = {
     "openai.svg": "openai-light.svg",
     "grok.svg": "grok-light.svg",
+    "elorian.svg": "elorian-light.svg",
     "glm.png": "glm-light.png",
     "kimi.png": "kimi-light.png",
   };
@@ -317,6 +325,7 @@
       }
       rows = [...best.values()];
     }
+    if (barsAxis === "costUsd") rows = rows.filter((r) => Number.isFinite(r.costUsd) && r.costUsd > 0);
     return [...rows].sort((a, b) => b[barsAxis] - a[barsAxis] || a.rank - b.rank);
   }
   // Match multicolor marks using their local logo colors. Each gradient spans
@@ -584,13 +593,15 @@
     const reasoning = $("effort-filter").value;
     const lower = lowerIsBetter.has(sortKey);
     // Rank always counts from the best value of the sorted column.
-    const merit = [...data].sort(
+    const available = data.filter((r) => Number.isFinite(r[sortKey]));
+    const unavailable = data.filter((r) => !Number.isFinite(r[sortKey]));
+    const merit = [...available].sort(
       (a, b) =>
         (lower ? a[sortKey] - b[sortKey] : b[sortKey] - a[sortKey]) ||
         a.rank - b.rank,
     );
     const ranking = new Map(merit.map((r, i) => [r.run, i + 1]));
-    const ordered = bestFirst ? merit : [...merit].reverse();
+    const ordered = [...(bestFirst ? merit : [...merit].reverse()), ...unavailable];
     const shown = ordered.filter((r) => {
       const haystack = `${r.name} ${r.vendor} ${r.effort} ${r.harness}`
         .toLowerCase()
@@ -607,7 +618,7 @@
       `<td class="num${sortKey === key ? " sorted" : ""}">${text}</td>`;
     $("leaderboard-body").innerHTML = visible
       .map((r) => {
-        const rank = ranking.get(r.run);
+        const rank = ranking.get(r.run) ?? "—";
         return `<tr><td class="num rank${rank <= 3 ? " top" : ""}">${rank}</td><td class="model-cell">${modelCell(
           r,
         )}</td>${cell(r, "overall", score(r.overall, 2))}${cell(
@@ -699,7 +710,7 @@
     const ladder = $("family-ladder"),
       ring = $("selection-ring");
     if (!ladder || !ring || !chartX) return;
-    const rungs = data
+    const rungs = costRows
       .filter((d) => d.family === r.family && d.harness === r.harness)
       .sort((a, b) => effortOrder.indexOf(a.effort) - effortOrder.indexOf(b.effort));
     ladder.innerHTML =
@@ -806,7 +817,7 @@
       hi = 3;
     const x = (v) =>
       L + ((Math.log10(v) - Math.log10(lo)) / (Math.log10(hi) - Math.log10(lo))) * (W - L - R);
-    const values = data.map((r) => r[chartAxis]);
+    const values = costRows.map((r) => r[chartAxis]);
     const yMin = Math.floor((Math.min(...values) - 1) / 5) * 5;
     const yMax = Math.ceil((Math.max(...values) + 1) / 5) * 5;
     const yStep = small && yMax - yMin > 20 ? 10 : 5;
@@ -818,7 +829,7 @@
       `<svg xmlns="${svgNS}" viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" role="group" aria-labelledby="cost-title cost-description"><title id="cost-title">${
         axisNames[chartAxis]
       } against mean cost per scene</title><desc id="cost-description">${
-        data.length
+        costRows.length
       } configurations. Logarithmic cost axis from 1 cent to 3 dollars. Score axis from ${yMin} to ${yMax}. Select a point with a click, Enter, or Space. Arrow keys move between points.</desc>`,
     );
     for (let t = yMin; t <= yMax; t += yStep)
@@ -842,7 +853,7 @@
         (L + W - R) / 2
       }" y="${H - 8}" fill="${C.muted}" font-size="12.5" text-anchor="middle">Mean cost per scene in US dollars, log scale</text>`,
     );
-    const byCost = [...data].sort((a, b) => a.costUsd - b.costUsd || b[chartAxis] - a[chartAxis]);
+    const byCost = [...costRows].sort((a, b) => a.costUsd - b.costUsd || b[chartAxis] - a[chartAxis]);
     let best = -Infinity;
     const frontier = [];
     for (const r of byCost)
@@ -862,7 +873,7 @@
       `<path d="${path}" fill="none" stroke="${C.overall}" stroke-width="2" stroke-opacity=".85"/><g id="family-ladder" pointer-events="none"></g>`,
     );
     const pts = [];
-    for (const r of [...data].reverse()) {
+    for (const r of [...costRows].reverse()) {
       const cx = x(r.costUsd),
         cy = y(r[chartAxis]),
         rad = pointRadius(r);
@@ -887,7 +898,7 @@
     box.innerHTML = s.join("");
     const points = [...box.querySelectorAll(".plot-point")];
     const orderBy = (key) =>
-      [...data].sort((a, b) => a[key] - b[key] || a.costUsd - b.costUsd).map((r) => r.run);
+      [...costRows].sort((a, b) => a[key] - b[key] || a.costUsd - b.costUsd).map((r) => r.run);
     points.forEach((p) => {
       p.addEventListener("click", (e) => {
         e.stopPropagation();
@@ -924,7 +935,7 @@
       box.querySelector(`.plot-point[data-run="${CSS.escape(first)}"]`)?.setAttribute("tabindex", "0");
     }
   }
-  $("chart-legend").innerHTML = legendHtml(new Set(data.map((r) => r.vendor)));
+  $("chart-legend").innerHTML = legendHtml(new Set(costRows.map((r) => r.vendor)));
   document.querySelectorAll("[data-chart-axis]").forEach((b) =>
     b.addEventListener("click", () => {
       chartAxis = b.dataset.chartAxis;
@@ -945,7 +956,7 @@
     themeButton.setAttribute("aria-label", dark ? "Switch to light mode" : "Switch to dark mode");
     renderBars();
     renderCostChart();
-    $("chart-legend").innerHTML = legendHtml(new Set(data.map((r) => r.vendor)));
+    $("chart-legend").innerHTML = legendHtml(new Set(costRows.map((r) => r.vendor)));
   }
   themeButton.addEventListener("click", () => {
     const next = theme() === "dark" ? "light" : "dark";

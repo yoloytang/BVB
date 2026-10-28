@@ -21,7 +21,7 @@ const data = sandbox.window.BVB_DATA;
 const esc = (v) =>
   String(v).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
 const score = (n, d = 1) => (Number.isFinite(n) ? n.toFixed(d) : "n/a");
-const money = (n) => `$${score(n, 3)}`;
+const money = (n) => Number.isFinite(n) ? `$${score(n, 3)}` : "n/a";
 const logos = {
   OpenAI: "openai.svg",
   Meta: "meta.png",
@@ -34,8 +34,10 @@ const logos = {
   MiniMax: "minimax-color.svg",
   ByteDance: "seed.png",
   DeepSeek: "deepseek-color.svg",
+  NVIDIA: "nvidia-color.svg",
+  Elorian: "elorian.svg",
 };
-const mono = new Set(["openai.svg", "grok.svg", "glm.png", "kimi.png"]);
+const mono = new Set(["openai.svg", "grok.svg", "glm.png", "kimi.png", "elorian.svg"]);
 const tasks = [
   "object_counting",
   "object_abs_distance",

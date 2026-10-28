@@ -55,6 +55,33 @@
   },
   {
     "rank": 3,
+    "name": "GPT-6.1 Terra",
+    "family": "GPT-6.1-Terra",
+    "vendor": "OpenAI",
+    "effort": "xhigh",
+    "harness": "mini-BVB",
+    "openWeight": false,
+    "overall": 75.15817837606215,
+    "dualVqa": 63.149847094801224,
+    "latentSim": 88.2110824704998,
+    "layout": 86.87591192622979,
+    "motion": 89.54625301476982,
+    "tasks": {
+      "object_counting": 45.5,
+      "object_abs_distance": 46.820809248554916,
+      "object_size_estimation": 74.06015037593986,
+      "room_size_estimation": 51.53846153846154,
+      "object_rel_distance": 52.71966527196653,
+      "object_rel_direction": 72.61613691931541,
+      "route_planning": 81.81818181818181,
+      "obj_appearance_order": 60.563380281690144
+    },
+    "costUsd": 0.29575104166666666,
+    "runtimeMin": 11.591851851851853,
+    "run": "mini-harness-gpt-6.1-terra-reasoning-xhigh-run01"
+  },
+  {
+    "rank": 4,
     "name": "GPT-6 Astra",
     "family": "GPT-6-Astra",
     "vendor": "OpenAI",
@@ -81,7 +108,7 @@
     "run": "mini-harness-gpt-6-astra-reasoning-high-run01"
   },
   {
-    "rank": 4,
+    "rank": 5,
     "name": "GPT-6 Sol",
     "family": "GPT-6-Sol",
     "vendor": "OpenAI",
@@ -108,7 +135,7 @@
     "run": "mini-harness-gpt-6-sol-reasoning-xhigh-run01"
   },
   {
-    "rank": 5,
+    "rank": 6,
     "name": "Gemini 4 Argon",
     "family": "Gemini-4-Argon",
     "vendor": "Google",
@@ -135,7 +162,7 @@
     "run": "mini-harness-gemini-4-argon-reasoning-high-run01"
   },
   {
-    "rank": 6,
+    "rank": 7,
     "name": "Claude Opus 5.5",
     "family": "Claude-Opus-5.5",
     "vendor": "Anthropic",
@@ -162,7 +189,7 @@
     "run": "mini-harness-claude-opus-5-5-reasoning-xhigh-run01"
   },
   {
-    "rank": 7,
+    "rank": 8,
     "name": "Claude Sonnet 5.5",
     "family": "Claude-Sonnet-5.5",
     "vendor": "Anthropic",
@@ -189,7 +216,7 @@
     "run": "mini-harness-claude-sonnet-5-5-reasoning-xhigh-run01"
   },
   {
-    "rank": 8,
+    "rank": 9,
     "name": "GPT-5.6 Sol",
     "family": "GPT-5.6-Sol",
     "vendor": "OpenAI",
@@ -216,7 +243,7 @@
     "run": "mini-harness-gpt-5.6-sol-reasoning-xhigh-run01"
   },
   {
-    "rank": 9,
+    "rank": 10,
     "name": "Grok-4.6",
     "family": "Grok-4.6",
     "vendor": "xAI",
@@ -243,7 +270,7 @@
     "run": "mini-harness-grok-4.6-reasoning-xhigh-run01"
   },
   {
-    "rank": 10,
+    "rank": 11,
     "name": "GPT-6 Luna",
     "family": "GPT-6-Luna",
     "vendor": "OpenAI",
@@ -270,7 +297,7 @@
     "run": "mini-harness-gpt-6-luna-reasoning-xhigh-run01"
   },
   {
-    "rank": 11,
+    "rank": 12,
     "name": "Grok-4.7",
     "family": "Grok-4.7",
     "vendor": "xAI",
@@ -297,7 +324,7 @@
     "run": "mini-harness-grok-4.7-reasoning-xhigh-run01"
   },
   {
-    "rank": 12,
+    "rank": 13,
     "name": "DeepSeek V4.1 Flash 1017",
     "family": "DeepSeek-V4.1-Flash-1017",
     "vendor": "DeepSeek",
@@ -324,7 +351,7 @@
     "run": "mini-harness-deepseek-v4.1-flash-1017-reasoning-max-run01"
   },
   {
-    "rank": 13,
+    "rank": 14,
     "name": "Claude Opus 5",
     "family": "Claude-Opus-5",
     "vendor": "Anthropic",
@@ -351,7 +378,7 @@
     "run": "mini-harness-claude-opus-5-reasoning-high-run01"
   },
   {
-    "rank": 14,
+    "rank": 15,
     "name": "Qwen3.8-Max",
     "family": "Qwen3.8-Max",
     "vendor": "Alibaba",
@@ -378,7 +405,7 @@
     "run": "mini-harness-qwen3.8-max-reasoning-high-run01"
   },
   {
-    "rank": 15,
+    "rank": 16,
     "name": "GPT-5.6 Sol",
     "family": "GPT-5.6-Sol",
     "vendor": "OpenAI",
@@ -405,7 +432,34 @@
     "run": "mini-harness-gpt-5.6-sol-reasoning-high-run01"
   },
   {
-    "rank": 16,
+    "rank": 17,
+    "name": "Glimpse",
+    "family": "Glimpse",
+    "vendor": "Elorian",
+    "effort": "max",
+    "harness": "mini-BVB",
+    "openWeight": false,
+    "overall": 68.86479427403515,
+    "dualVqa": 57.95107033639144,
+    "latentSim": 80.7194945609404,
+    "layout": 79.22309639139309,
+    "motion": 82.21589273048772,
+    "tasks": {
+      "object_counting": 37.0,
+      "object_abs_distance": 45.664739884393065,
+      "object_size_estimation": 66.72932330827068,
+      "room_size_estimation": 42.30769230769231,
+      "object_rel_distance": 43.51464435146443,
+      "object_rel_direction": 71.63814180929096,
+      "route_planning": 77.27272727272727,
+      "obj_appearance_order": 59.15492957746479
+    },
+    "costUsd": 0.3651298611111111,
+    "runtimeMin": 13.266001157407407,
+    "run": "mini-harness-glimpse-reasoning-max-run01"
+  },
+  {
+    "rank": 18,
     "name": "GPT-5.6 Terra",
     "family": "GPT-5.6-Terra",
     "vendor": "OpenAI",
@@ -432,7 +486,7 @@
     "run": "mini-harness-gpt-5.6-terra-reasoning-high-run01"
   },
   {
-    "rank": 17,
+    "rank": 19,
     "name": "GPT-5.5",
     "family": "GPT-5.5",
     "vendor": "OpenAI",
@@ -459,7 +513,7 @@
     "run": "mini-harness-gpt-5.5-reasoning-high-run01"
   },
   {
-    "rank": 18,
+    "rank": 20,
     "name": "Claude Haiku 5.5",
     "family": "Claude-Haiku-5.5",
     "vendor": "Anthropic",
@@ -486,7 +540,7 @@
     "run": "mini-harness-claude-haiku-5-5-reasoning-xhigh-run01"
   },
   {
-    "rank": 19,
+    "rank": 21,
     "name": "GPT-5.6 Terra",
     "family": "GPT-5.6-Terra",
     "vendor": "OpenAI",
@@ -513,7 +567,7 @@
     "run": "mini-harness-gpt-5.6-terra-reasoning-xhigh-run01"
   },
   {
-    "rank": 20,
+    "rank": 22,
     "name": "Claude Opus 5.5",
     "family": "Claude-Opus-5.5",
     "vendor": "Anthropic",
@@ -540,7 +594,7 @@
     "run": "mini-harness-claude-opus-5-5-reasoning-high-run01"
   },
   {
-    "rank": 21,
+    "rank": 23,
     "name": "GPT-5.6 Sol",
     "family": "GPT-5.6-Sol",
     "vendor": "OpenAI",
@@ -567,7 +621,7 @@
     "run": "mini-harness-gpt-5.6-sol-run01"
   },
   {
-    "rank": 22,
+    "rank": 24,
     "name": "GLM-5.3-Flash",
     "family": "GLM-5.3-Flash",
     "vendor": "Zhipu AI",
@@ -594,7 +648,7 @@
     "run": "mini-harness-glm-5.3-flash-reasoning-xhigh-run01"
   },
   {
-    "rank": 23,
+    "rank": 25,
     "name": "GPT-5.6 Sol",
     "family": "GPT-5.6-Sol",
     "vendor": "OpenAI",
@@ -621,7 +675,7 @@
     "run": "mini-harness-gpt-5.6-sol-reasoning-medium-run01"
   },
   {
-    "rank": 24,
+    "rank": 26,
     "name": "Muse Wonder",
     "family": "Muse-Wonder",
     "vendor": "Meta",
@@ -648,7 +702,7 @@
     "run": "mini-harness-muse-wonder-reasoning-xhigh-run01"
   },
   {
-    "rank": 25,
+    "rank": 27,
     "name": "Muse Spark 1.3",
     "family": "Muse-Spark-1.3",
     "vendor": "Meta",
@@ -675,7 +729,7 @@
     "run": "mini-harness-muse-spark-1.3-reasoning-xhigh-run01"
   },
   {
-    "rank": 26,
+    "rank": 28,
     "name": "DeepSeek V4.1 Flash",
     "family": "DeepSeek-V4.1-Flash",
     "vendor": "DeepSeek",
@@ -702,7 +756,7 @@
     "run": "mini-harness-deepseek-v4.1-flash-reasoning-max-run01"
   },
   {
-    "rank": 27,
+    "rank": 29,
     "name": "GPT-5.5",
     "family": "GPT-5.5",
     "vendor": "OpenAI",
@@ -729,7 +783,7 @@
     "run": "mini-harness-gpt-5.5-reasoning-medium-run01"
   },
   {
-    "rank": 28,
+    "rank": 30,
     "name": "GPT-5.6 Luna",
     "family": "GPT-5.6-Luna",
     "vendor": "OpenAI",
@@ -756,7 +810,7 @@
     "run": "mini-harness-gpt-5.6-luna-reasoning-high-run01"
   },
   {
-    "rank": 29,
+    "rank": 31,
     "name": "Grok-4.5",
     "family": "Grok-4.5",
     "vendor": "xAI",
@@ -783,7 +837,7 @@
     "run": "mini-harness-grok-4.5-reasoning-high-run01"
   },
   {
-    "rank": 30,
+    "rank": 32,
     "name": "GPT-5.6 Sol",
     "family": "GPT-5.6-Sol",
     "vendor": "OpenAI",
@@ -810,7 +864,7 @@
     "run": "mini-harness-gpt-5.6-sol-reasoning-low-run01"
   },
   {
-    "rank": 31,
+    "rank": 33,
     "name": "GPT-5.6 Terra",
     "family": "GPT-5.6-Terra",
     "vendor": "OpenAI",
@@ -837,7 +891,7 @@
     "run": "mini-harness-gpt-5.6-terra-reasoning-medium-run01"
   },
   {
-    "rank": 32,
+    "rank": 34,
     "name": "Gemini 3.8 Flash",
     "family": "Gemini-3.8-Flash",
     "vendor": "Google",
@@ -864,7 +918,7 @@
     "run": "mini-harness-gemini-3.8-flash-reasoning-high-run01"
   },
   {
-    "rank": 33,
+    "rank": 35,
     "name": "GPT-5.5",
     "family": "GPT-5.5",
     "vendor": "OpenAI",
@@ -891,7 +945,7 @@
     "run": "mini-harness-gpt-5.5-reasoning-low-run01"
   },
   {
-    "rank": 34,
+    "rank": 36,
     "name": "GPT-5.6 Luna",
     "family": "GPT-5.6-Luna",
     "vendor": "OpenAI",
@@ -918,7 +972,7 @@
     "run": "mini-harness-gpt-5.6-luna-reasoning-medium-run01"
   },
   {
-    "rank": 35,
+    "rank": 37,
     "name": "Claude Sonnet 4.6",
     "family": "Claude-Sonnet-4.6",
     "vendor": "Anthropic",
@@ -945,7 +999,7 @@
     "run": "mini-harness-claude-sonnet-4-6-run01"
   },
   {
-    "rank": 36,
+    "rank": 38,
     "name": "GPT-5.2",
     "family": "GPT-5.2",
     "vendor": "OpenAI",
@@ -972,7 +1026,7 @@
     "run": "mini-harness-gpt-5.2-reasoning-high-run01"
   },
   {
-    "rank": 37,
+    "rank": 39,
     "name": "GPT-5.6 Terra",
     "family": "GPT-5.6-Terra",
     "vendor": "OpenAI",
@@ -999,7 +1053,7 @@
     "run": "mini-harness-gpt-5.6-terra-reasoning-low-run01"
   },
   {
-    "rank": 38,
+    "rank": 40,
     "name": "Claude Sonnet 5",
     "family": "Claude-Sonnet-5",
     "vendor": "Anthropic",
@@ -1026,7 +1080,7 @@
     "run": "mini-harness-claude-sonnet-5-run01"
   },
   {
-    "rank": 39,
+    "rank": 41,
     "name": "Gemini 3.1 Pro",
     "family": "Gemini-3.1-Pro",
     "vendor": "Google",
@@ -1053,7 +1107,7 @@
     "run": "mini-harness-gemini-3.1-pro-preview-reasoning-high-run01"
   },
   {
-    "rank": 40,
+    "rank": 42,
     "name": "Claude Sonnet 5",
     "family": "Claude-Sonnet-5",
     "vendor": "Anthropic",
@@ -1080,7 +1134,7 @@
     "run": "mini-harness-claude-sonnet-5-reasoning-high-run01"
   },
   {
-    "rank": 41,
+    "rank": 43,
     "name": "Claude Opus 4.6",
     "family": "Claude-Opus-4.6",
     "vendor": "Anthropic",
@@ -1107,7 +1161,7 @@
     "run": "mini-harness-claude-opus-4-6-run01"
   },
   {
-    "rank": 42,
+    "rank": 44,
     "name": "Claude Sonnet 4.6",
     "family": "Claude-Sonnet-4.6",
     "vendor": "Anthropic",
@@ -1134,7 +1188,7 @@
     "run": "mini-harness-claude-sonnet-4-6-reasoning-high-run01"
   },
   {
-    "rank": 43,
+    "rank": 45,
     "name": "Claude Opus 4.7",
     "family": "Claude-Opus-4.7",
     "vendor": "Anthropic",
@@ -1161,7 +1215,7 @@
     "run": "mini-harness-claude-opus-4-7-run01"
   },
   {
-    "rank": 44,
+    "rank": 46,
     "name": "Muse Spark 1.2",
     "family": "Muse-Spark-1.2",
     "vendor": "Meta",
@@ -1188,7 +1242,7 @@
     "run": "mini-harness-muse-spark-1.2-reasoning-xhigh-run01"
   },
   {
-    "rank": 45,
+    "rank": 47,
     "name": "GPT-5.6 Luna",
     "family": "GPT-5.6-Luna",
     "vendor": "OpenAI",
@@ -1215,7 +1269,7 @@
     "run": "mini-harness-gpt-5.6-luna-reasoning-low-run01"
   },
   {
-    "rank": 46,
+    "rank": 48,
     "name": "Claude Opus 4.8",
     "family": "Claude-Opus-4.8",
     "vendor": "Anthropic",
@@ -1242,7 +1296,7 @@
     "run": "mini-harness-claude-opus-4-8-run01"
   },
   {
-    "rank": 47,
+    "rank": 49,
     "name": "Claude Opus 4.8",
     "family": "Claude-Opus-4.8",
     "vendor": "Anthropic",
@@ -1269,7 +1323,7 @@
     "run": "mini-harness-claude-opus-4-8-reasoning-high-run01"
   },
   {
-    "rank": 48,
+    "rank": 50,
     "name": "Gemini 3 Flash",
     "family": "Gemini-3-Flash",
     "vendor": "Google",
@@ -1296,7 +1350,7 @@
     "run": "mini-harness-gemini-3-flash-preview-reasoning-high-run01"
   },
   {
-    "rank": 49,
+    "rank": 51,
     "name": "Claude Opus 4.7",
     "family": "Claude-Opus-4.7",
     "vendor": "Anthropic",
@@ -1323,7 +1377,7 @@
     "run": "mini-harness-claude-opus-4-7-reasoning-high-run01"
   },
   {
-    "rank": 50,
+    "rank": 52,
     "name": "GPT-5.2",
     "family": "GPT-5.2",
     "vendor": "OpenAI",
@@ -1350,7 +1404,7 @@
     "run": "mini-harness-gpt-5.2-run01"
   },
   {
-    "rank": 51,
+    "rank": 53,
     "name": "GPT-5.4",
     "family": "GPT-5.4",
     "vendor": "OpenAI",
@@ -1377,7 +1431,7 @@
     "run": "mini-harness-gpt-5.4-run01"
   },
   {
-    "rank": 52,
+    "rank": 54,
     "name": "GPT-5.5",
     "family": "GPT-5.5",
     "vendor": "OpenAI",
@@ -1404,7 +1458,7 @@
     "run": "mini-harness-gpt-5.5-run01"
   },
   {
-    "rank": 53,
+    "rank": 55,
     "name": "GPT-5.4 Mini",
     "family": "GPT-5.4-Mini",
     "vendor": "OpenAI",
@@ -1431,7 +1485,7 @@
     "run": "mini-harness-gpt-5.4-mini-run01"
   },
   {
-    "rank": 54,
+    "rank": 56,
     "name": "Kimi-K2.5",
     "family": "Kimi-K2.5",
     "vendor": "Moonshot AI",
@@ -1458,7 +1512,7 @@
     "run": "mini-harness-kimi-k2.5-run01"
   },
   {
-    "rank": 55,
+    "rank": 57,
     "name": "GLM-5V-Turbo",
     "family": "GLM-5V-Turbo",
     "vendor": "Zhipu AI",
@@ -1485,7 +1539,7 @@
     "run": "mini-harness-glm-5v-turbo-run01"
   },
   {
-    "rank": 56,
+    "rank": 58,
     "name": "MiniMax-M3",
     "family": "MiniMax-M3",
     "vendor": "MiniMax",
@@ -1512,7 +1566,7 @@
     "run": "mini-harness-minimax-m3-run01"
   },
   {
-    "rank": 57,
+    "rank": 59,
     "name": "Qwen3.5-122B",
     "family": "Qwen3.5-122B",
     "vendor": "Alibaba",
@@ -1539,7 +1593,7 @@
     "run": "mini-harness-qwen3.5-122b-a10b-run01"
   },
   {
-    "rank": 58,
+    "rank": 60,
     "name": "Grok-4.3",
     "family": "Grok-4.3",
     "vendor": "xAI",
@@ -1566,7 +1620,7 @@
     "run": "mini-harness-grok-4.3-reasoning-high-run01"
   },
   {
-    "rank": 59,
+    "rank": 61,
     "name": "Qwen3.5-397B",
     "family": "Qwen3.5-397B",
     "vendor": "Alibaba",
@@ -1593,7 +1647,7 @@
     "run": "mini-harness-qwen3.5-397b-a17b-run01"
   },
   {
-    "rank": 60,
+    "rank": 62,
     "name": "Seed-2.0-Mini",
     "family": "Seed-2.0-Mini",
     "vendor": "ByteDance",
@@ -1620,7 +1674,7 @@
     "run": "mini-harness-seed-2.0-mini-run01"
   },
   {
-    "rank": 61,
+    "rank": 63,
     "name": "Qwen3.6-Plus",
     "family": "Qwen3.6-Plus",
     "vendor": "Alibaba",
@@ -1647,7 +1701,7 @@
     "run": "mini-harness-qwen3.6-plus-run01"
   },
   {
-    "rank": 62,
+    "rank": 64,
     "name": "Grok-4.3",
     "family": "Grok-4.3",
     "vendor": "xAI",
@@ -1674,7 +1728,34 @@
     "run": "mini-harness-grok-4.3-run01"
   },
   {
-    "rank": 63,
+    "rank": 65,
+    "name": "Nemotron 3.5 Super VL",
+    "family": "Nemotron-3.5-Super-VL",
+    "vendor": "NVIDIA",
+    "effort": "max",
+    "harness": "mini-BVB",
+    "openWeight": true,
+    "overall": 52.11086091276012,
+    "dualVqa": 47.09480122324159,
+    "latentSim": 57.38070608220167,
+    "layout": 55.7146655395627,
+    "motion": 59.04674662484063,
+    "tasks": {
+      "object_counting": 22.5,
+      "object_abs_distance": 34.68208092485549,
+      "object_size_estimation": 56.766917293233085,
+      "room_size_estimation": 25.384615384615383,
+      "object_rel_distance": 40.58577405857741,
+      "object_rel_direction": 62.34718826405868,
+      "route_planning": 54.54545454545455,
+      "obj_appearance_order": 45.070422535211264
+    },
+    "costUsd": null,
+    "runtimeMin": null,
+    "run": "mini-harness-nemotron-3.5-super-vl-reasoning-max-run01"
+  },
+  {
+    "rank": 66,
     "name": "Seed-2.0-Lite",
     "family": "Seed-2.0-Lite",
     "vendor": "ByteDance",
@@ -1701,7 +1782,7 @@
     "run": "mini-harness-seed-2.0-lite-run01"
   },
   {
-    "rank": 64,
+    "rank": 67,
     "name": "Qwen3.5-27B",
     "family": "Qwen3.5-27B",
     "vendor": "Alibaba",
