@@ -20,7 +20,14 @@
   const score = (n, digits = 1) =>
     Number.isFinite(n) ? n.toFixed(digits) : "n/a";
   const money = (n) => Number.isFinite(n) ? `$${score(n, 3)}` : "n/a";
-  const costNote = (r) => r.costScenes ? `Mean over ${r.costScenes} recorded scenes.` : "";
+  const rowKey = (r) => r.run || [r.family, r.harness ?? "", r.effort ?? ""].join("|");
+  const effortText = (r) => r.effort == null ? "" : String(r.effort).trim();
+  const effortHtml = (r) => effortText(r) ? ` <span class="effort-text">${escape(effortText(r))}</span>` : "";
+  const mixedSceneCounts = data.some((r) => Number.isFinite(r.sceneCount) && r.sceneCount !== 288);
+  const costNote = (r) => [
+    r.costEstimate === true ? "Estimated." : "",
+    r.costScenes ? `Mean over ${r.costScenes} recorded scenes.` : "",
+  ].filter(Boolean).join(" ");
   const costCell = (r) => `<span${costNote(r) ? ` title="${costNote(r)}"` : ""}>${money(r.costUsd)}</span>`;
   const costRows = data.filter((r) => Number.isFinite(r.costUsd) && r.costUsd > 0);
 
@@ -58,6 +65,7 @@
       DeepSeek: "#4d6bfe",
       NVIDIA: "#74B71B",
       Elorian: "#30D75D",
+      "Thinking Machines": "#f58224",
     },
     dark: {
       OpenAI: "#e5e5e1",
@@ -73,6 +81,7 @@
       DeepSeek: "#8096ff",
       NVIDIA: "#96D443",
       Elorian: "#30D75D",
+      "Thinking Machines": "#ff9b48",
     },
   };
 
@@ -94,6 +103,7 @@
     DeepSeek: "deepseek-color.svg",
     NVIDIA: "nvidia-color.svg",
     Elorian: "elorian.svg",
+    "Thinking Machines": "inkling-lunge-logo.png",
   };
   // Dark single-color marks, which need a light version on the dark page.
   const monoLogos = {
@@ -128,16 +138,15 @@
     "route_planning",
     "obj_appearance_order",
   ];
-  const configName = (r) => `${r.name} with reasoning effort ${r.effort}`;
+  const configName = (r) => r.name + (effortText(r) ? ` with reasoning effort ${effortText(r)}` : "");
   const modelCell = (r) => {
     const src = logoSrc(r);
-    return `<span class="model-identity" title="${escape(r.vendor)}">${
+    const title = r.vendor;
+    return `<span class="model-identity" title="${escape(title)}">${
       src
         ? `<img class="model-logo${isMono(r) ? " mono" : ""}" src="${escape(src)}" width="20" height="20" alt="" aria-hidden="true" />`
         : ""
-    }<span><span class="model-name">${escape(r.name)}</span> <span class="effort-text">${escape(
-      r.effort,
-    )}</span>${r.openWeight ? ' <span class="tag-text">open-weight</span>' : ""}</span></span>`;
+    }<span><span class="model-name">${escape(r.name)}</span>${effortHtml(r)}${r.openWeight ? ' <span class="tag-text">open-weight</span>' : ""}</span></span>`;
   };
   const legendHtml = (vendors) =>
     vendorOrder
@@ -272,9 +281,7 @@
   bindMetricTips();
 
   const dataTipHtml = (r, highlight) =>
-    `<p class="tip-title">${escape(r.name)} <span class="effort-text">${escape(
-      r.effort,
-    )}</span></p><dl>${["overall", "dualVqa", "latentSim"]
+    `<p class="tip-title">${escape(r.name)}${effortHtml(r)}</p><dl>${["overall", "dualVqa", "latentSim"]
       .map(
         (k) =>
           `<dt>${axisNames[k]}</dt><dd${k === highlight ? ' style="color:var(--ink)"' : ""}>${score(
@@ -282,14 +289,14 @@
             k === "overall" ? 2 : 1,
           )}</dd>`,
       )
-      .join("")}<dt>Cost per scene</dt><dd>${money(r.costUsd)}</dd>${r.costScenes ? `<dt>Cost records</dt><dd>${r.costScenes} scenes</dd>` : ""}</dl>`;
+      .join("")}<dt>Cost per scene</dt><dd>${costCell(r)}</dd>${r.costScenes ? `<dt>Cost records</dt><dd>${r.costScenes} scenes</dd>` : ""}</dl>`;
 
   // ---------------------------------------------------------------------
   // Facts derived from the data, so the prose follows the leaderboard.
   function writeFacts() {
     const providerCount = new Set(data.map((r) => r.vendor)).size;
     const lsAbove = data.filter((r) => r.latentSim > r.dualVqa).length;
-    $("overview-count").textContent = `The leaderboard covers ${data.length} configurations from ${providerCount} providers on all 288 test videos. It is updated as new models are evaluated.`;
+    $("overview-count").textContent = `The leaderboard covers ${data.length} configurations from ${providerCount} providers${mixedSceneCounts ? "" : " on all 288 test videos"}. It is updated as new models are evaluated.`;
     const gaps = data.map((r) => r.latentSim - r.dualVqa);
     const bestDv = Math.max(...data.map((r) => r.dualVqa));
     $("results-lede").textContent =
@@ -339,6 +346,7 @@
     MiniMax: { id: "minimax", colors: ["#E2167E", "#FE603C"], horizontal: true },
     ByteDance: { id: "seed", colors: ["#A060F0", "#1030F0", "#30E0B0"] },
     DeepSeek: { id: "deepseek-water", colors: ["#69D5FF", "#2B9FF4", "#4D6BFE"] },
+    "Thinking Machines": { id: "inkling-ink", colors: ["#f16a18", "#ff8a28", "#f16a18"], horizontal: true },
   };
   const xaiBarColor = () => theme() === "dark" ? "#c3c7cf" : "#49515e";
   function barPaint(vendor) {
@@ -378,6 +386,17 @@
       `<ellipse cx="14" cy="${top + 13}" rx="1.2" ry="2" fill="${blue}" transform="rotate(-28,14,${top + 13})"/>` +
       `</g>`;
   }
+  function inklingInkBar(cx, top, base, width) {
+    // Scale the splash uniformly; only the long tapered tail follows bar height.
+    const k = Math.min(width / 24, (base - top) / 36);
+    const h = (base - top) / k;
+    const capY = (v) => v * 24 / 38;
+    const ink = theme() === "dark" ? "#ff9b48" : "#f58224";
+    return `<g class="inkling-ink" transform="translate(${cx},${top}) scale(${k})" aria-hidden="true">` +
+      `<path class="bar-body" fill="url(#bars-inkling-ink)" d="M0 0 C4 0 6 ${capY(4)} 5 ${capY(8)} C12 ${capY(4)} 16 ${capY(10)} 11 ${capY(16)} C17 ${capY(18)} 15 ${capY(25)} 9 ${capY(27)} C7 ${capY(38)} 3 ${h * .6} 2 ${h} H-2 C-3 ${h * .62} -8 ${capY(38)} -9 ${capY(28)} C-17 ${capY(28)} -18 ${capY(20)} -12 ${capY(17)} C-17 ${capY(9)} -10 ${capY(4)} -5 ${capY(8)} C-6 ${capY(3)} -4 0 0 0Z"/>` +
+      `<path d="M-5 ${capY(13)} Q-8 ${capY(19)} -4 ${capY(27)} C-2 ${capY(52)} -1 ${h * .8} -.2 ${h - capY(10)}" fill="none" stroke="#fff" stroke-opacity=".22" stroke-width="${1.2 * 24 / 38}"/>` +
+      `<g fill="${ink}" transform="scale(1,${24 / 38})"><ellipse cx="-15" cy="36" rx="1.6" ry="2.4" transform="rotate(-20 -15 36)"/><ellipse cx="14.5" cy="43" rx="1.3" ry="2"/></g></g>`;
+  }
   function renderBars() {
     const C = palette();
     const isCost = barsAxis === "costUsd";
@@ -390,7 +409,7 @@
       plotH = 300;
     // Rotated labels hang to the left of their bar, so reserve room for
     // the first few before the plot starts.
-    const labelWidth = (r) => (r.name.length + r.effort.length + 1) * 6.6 * 0.72 + 6;
+    const labelWidth = (r) => (r.name.length + effortText(r).length + 1) * 6.6 * 0.72 + 6;
     // Fit more models in view without shrinking labels or removing scrolling.
     const pitch = 36;
     const padLeft = Math.max(
@@ -398,7 +417,8 @@
       ...rows.slice(0, 6).map((r, i) => labelWidth(r) - (L + pitch * i + pitch / 2)),
     );
     const W = Math.round(padLeft + L + R + pitch * n);
-    const labelH = Math.ceil(36 + Math.max(...rows.map(labelWidth)) + 8);
+    const labelOffset = 36;
+    const labelH = Math.ceil(labelOffset + Math.max(...rows.map(labelWidth)) + 8);
     const H = T + plotH + labelH;
     const barW = Math.min(24, Math.round(pitch * 0.67));
     // The axis starts at the multiple of ten below the lowest score, so
@@ -456,22 +476,32 @@
       const src = logoSrc(r, theme());
       const paint = barPaint(r.vendor);
       const isWhale = r.vendor === "DeepSeek";
+      const isInkling = r.vendor === "Thinking Machines";
+      const spriteSize = 20;
+      const inklingNozzle = base + 7;
+      // The lunge balances the silhouette around the upright muzzle.
+      const spriteWidth = spriteSize;
+      const muzzleY = 46 / 1254;
       const iconSize = isWhale ? 20 : 16;
       const label = `${configName(r)}. ${axisNames[barsAxis]} ${isCost ? money(v) : score(v, barsAxis === "overall" ? 2 : 1)}.${isCost && costNote(r) ? ` ${costNote(r)}` : ""}`;
       svg.push(
-        `<g class="bar-col" data-run="${escape(r.run)}" tabindex="${i === 0 ? 0 : -1}" role="img" aria-label="${escape(label)}">` +
-          `<rect class="hit" x="${cx - pitch / 2}" y="${T - 18}" width="${pitch}" height="${plotH + 18 + 34}" rx="3"/>` +
-          (isWhale && h >= 24
+        `<g class="bar-col" data-run="${escape(rowKey(r))}" tabindex="${i === 0 ? 0 : -1}" role="img" aria-label="${escape(label)}">` +
+          `<rect class="hit" x="${cx - pitch / 2}" y="${T - 18}" width="${pitch}" height="${plotH + 18 + labelOffset - 2}" rx="3"/>` +
+          (isInkling && h > 0
+            ? inklingInkBar(cx, top, inklingNozzle, barW)
+            : isWhale && h >= 24
             ? deepseekWaterBar(cx, top, base, barW, iconSize)
             : drawBar(path, paint.body) +
               `<rect class="bar-cap" x="${x0}" y="${top}" width="${barW}" height="${Math.min(2, h)}" fill="${paint.cap}" aria-hidden="true"/>`) +
           `<text x="${cx}" y="${top - 6}" text-anchor="${isCost ? "start" : "middle"}"${isCost ? ` transform="rotate(-45 ${cx} ${top - 6})"` : ""} font-size="${valueSize}" font-weight="600" fill="${C.ink}">${isCost ? money(v) : score(v, 1)}</text>` +
-          (src
+          (isInkling
+            ? `<image class="inkling-mascot" href="${escape(src)}" x="${cx - spriteWidth / 2}" y="${inklingNozzle - spriteSize * muzzleY}" width="${spriteWidth}" height="${spriteSize}" aria-hidden="true"/>`
+            : src
             ? `<image href="${escape(src)}" x="${cx - iconSize / 2}" y="${base + (isWhale ? 7 : 9)}" width="${iconSize}" height="${iconSize}" aria-hidden="true"/>`
             : "") +
-          `<text transform="translate(${cx + 4},${base + 36}) rotate(-45)" text-anchor="end" font-size="12.5" fill="${C.ink}">${escape(
+          `<text transform="translate(${cx + 4},${base + labelOffset}) rotate(-45)" text-anchor="end" font-size="12.5" fill="${C.ink}">${escape(
             r.name,
-          )}<tspan fill="${C.muted}"> ${escape(r.effort)}</tspan></text>` +
+          )}${effortText(r) ? `<tspan fill="${C.muted}"> ${escape(effortText(r))}</tspan>` : ""}</text>` +
           `</g>`,
       );
     });
@@ -488,14 +518,14 @@
       barsView === "best"
         ? `the configuration with the highest ${axisNames[barsAxis]} for each model`
         : `all ${n} configurations`
-    } on all 288 test scenes. Higher is better.`;
+    }${mixedSceneCounts ? "" : " on all 288 test scenes"}. Higher is better.`;
     document
       .querySelectorAll("[data-bars-axis]")
       .forEach((b) =>
         b.setAttribute("aria-pressed", String(b.dataset.barsAxis === barsAxis)),
       );
     const cols = [...$("bar-chart").querySelectorAll(".bar-col")];
-    const byRun = new Map(data.map((r) => [r.run, r]));
+    const byRun = new Map(data.map((r) => [rowKey(r), r]));
     const show = (g, pinned = false) =>
       showTip(g, dataTipHtml(byRun.get(g.dataset.run), barsAxis), {
         dataTip: true,
@@ -602,7 +632,7 @@
         (lower ? a[sortKey] - b[sortKey] : b[sortKey] - a[sortKey]) ||
         a.rank - b.rank,
     );
-    const ranking = new Map(merit.map((r, i) => [r.run, i + 1]));
+    const ranking = new Map(merit.map((r, i) => [rowKey(r), i + 1]));
     const ordered = [...(bestFirst ? merit : [...merit].reverse()), ...unavailable];
     const shown = ordered.filter((r) => {
       const haystack = `${r.name} ${r.vendor} ${r.effort} ${r.harness}`
@@ -620,7 +650,7 @@
       `<td class="num${sortKey === key ? " sorted" : ""}">${text}</td>`;
     $("leaderboard-body").innerHTML = visible
       .map((r) => {
-        const rank = ranking.get(r.run) ?? "—";
+        const rank = ranking.get(rowKey(r)) ?? "—";
         return `<tr><td class="num rank${rank <= 3 ? " top" : ""}">${rank}</td><td class="model-cell">${modelCell(
           r,
         )}</td>${cell(r, "overall", score(r.overall, 2))}${cell(
@@ -641,10 +671,13 @@
             r.layout,
           )}</td><td class="num">${score(r.motion)}</td>${tasks
             .map(
-              (k, i) =>
-                `<td class="num${i === 0 ? " group-start" : ""}" style="background:color-mix(in srgb, var(--dv) ${(
-                  r.tasks[k] * 0.16
-                ).toFixed(1)}%, transparent)">${score(r.tasks[k])}</td>`,
+              (k, i) => {
+                const value = r.tasks?.[k];
+                const heat = Number.isFinite(value)
+                  ? ` style="background:color-mix(in srgb, var(--dv) ${(value * .16).toFixed(1)}%, transparent)"`
+                  : "";
+                return `<td class="num${i === 0 ? " group-start" : ""}"${heat}>${score(value)}</td>`;
+              },
             )
             .join("")}</tr>`,
       )
@@ -726,19 +759,17 @@
     ring.innerHTML = `<circle cx="${cx}" cy="${cy}" r="${pointRadius(r) + 4.5}" fill="none" stroke="${C.ink}" stroke-width="2"/>`;
   }
   function showPoint(run) {
-    const r = data.find((row) => row.run === run);
+    const r = data.find((row) => rowKey(row) === run);
     if (!r) {
       $("point-detail").innerHTML = "";
       return;
     }
     selectedRun = run;
-    $("point-detail").innerHTML = `<h4>${escape(r.name)} <span class="effort-text">${escape(
-      r.effort,
-    )}</span></h4><dl><div><dt>Overall</dt><dd>${score(r.overall, 2)}</dd></div><div><dt>Dual VQA</dt><dd>${score(
+    $("point-detail").innerHTML = `<h4>${escape(r.name)}${effortHtml(r)}</h4><dl><div><dt>Overall</dt><dd>${score(r.overall, 2)}</dd></div><div><dt>Dual VQA</dt><dd>${score(
       r.dualVqa,
     )}</dd></div><div><dt>Latent Similarity</dt><dd>${score(
       r.latentSim,
-    )}</dd></div><div><dt>Cost per scene</dt><dd>${money(r.costUsd)}</dd></div>${r.costScenes ? `<div><dt>Cost records</dt><dd>${r.costScenes} scenes</dd></div>` : ""}</dl>`;
+    )}</dd></div><div><dt>Cost per scene</dt><dd>${costCell(r)}</dd></div>${r.costScenes ? `<div><dt>Cost records</dt><dd>${r.costScenes} scenes</dd></div>` : ""}</dl>`;
     document.querySelectorAll(".plot-point").forEach((p) => {
       const on = p.dataset.run === run;
       p.setAttribute("aria-pressed", String(on));
@@ -867,10 +898,10 @@
     for (const r of frontier.slice(1)) path += `H${x(r.costUsd)}V${y(r[chartAxis])}`;
     path += `H${W - R}`;
     const ends = [frontier[0], frontier[frontier.length - 1]].filter(
-      (r, i, all) => all.findIndex((o) => o.run === r.run) === i,
+      (r, i, all) => all.findIndex((o) => rowKey(o) === rowKey(r)) === i,
     );
-    landmarkRuns = ends.map((r) => r.run);
-    landmarkNames = Object.fromEntries(ends.map((r) => [r.run, [r.name, r.effort]]));
+    landmarkRuns = ends.map(rowKey);
+    landmarkNames = Object.fromEntries(ends.map((r) => [rowKey(r), [r.name, effortText(r)]]));
     s.push(
       `<path d="${path}" fill="none" stroke="${C.overall}" stroke-width="2" stroke-opacity=".85"/><g id="family-ladder" pointer-events="none"></g>`,
     );
@@ -879,13 +910,13 @@
       const cx = x(r.costUsd),
         cy = y(r[chartAxis]),
         rad = pointRadius(r);
-      pts.push({ run: r.run, x: cx, y: cy, r: rad });
+      pts.push({ run: rowKey(r), x: cx, y: cy, r: rad });
       const label = `${configName(r)}. ${axisNames[chartAxis]} ${score(
         r[chartAxis],
         chartAxis === "overall" ? 2 : 1,
       )}. ${money(r.costUsd)} per scene. ${costNote(r)}`;
       s.push(
-        `<g class="plot-point" data-run="${escape(r.run)}" tabindex="-1" role="button" aria-pressed="false" aria-label="${escape(
+        `<g class="plot-point" data-run="${escape(rowKey(r))}" tabindex="-1" role="button" aria-pressed="false" aria-label="${escape(
           label,
         )}"><circle cx="${cx.toFixed(2)}" cy="${cy.toFixed(2)}" r="${Math.max(12, rad + 6)}" fill="transparent"/><circle cx="${cx.toFixed(
           2,
@@ -900,7 +931,7 @@
     box.innerHTML = s.join("");
     const points = [...box.querySelectorAll(".plot-point")];
     const orderBy = (key) =>
-      [...costRows].sort((a, b) => a[key] - b[key] || a.costUsd - b.costUsd).map((r) => r.run);
+      [...costRows].sort((a, b) => a[key] - b[key] || a.costUsd - b.costUsd).map(rowKey);
     points.forEach((p) => {
       p.addEventListener("click", (e) => {
         e.stopPropagation();

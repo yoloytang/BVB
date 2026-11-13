@@ -855,6 +855,9 @@ html.js .board:not([data-view="table"]) .table-only {
 .bar-col .bar-body {
   fill-opacity: 0.7;
 }
+.bar-col .inkling-ink .bar-body {
+  fill-opacity: 1;
+}
 .bar-col .bar-cap {
   fill-opacity: 1;
 }

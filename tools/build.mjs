@@ -4,8 +4,8 @@
 //   node tools/build.mjs
 //
 // It pre-renders the leaderboard tables into index.html so the page reads
-// without JavaScript, stamps the leaderboard date from the last commit that
-// touched data.js, and refreshes the cache-busting hashes on the asset URLs.
+// without JavaScript, stamps the latest data commit or report date, and
+// refreshes the cache-busting hashes on the asset URLs.
 // The row markup mirrors renderLeaderboard() in app.js.
 import { readFileSync, writeFileSync } from "node:fs";
 import { createHash } from "node:crypto";
@@ -22,7 +22,13 @@ const esc = (v) =>
   String(v).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
 const score = (n, d = 1) => (Number.isFinite(n) ? n.toFixed(d) : "n/a");
 const money = (n) => Number.isFinite(n) ? `$${score(n, 3)}` : "n/a";
-const costCell = (r) => `<span${r.costScenes ? ` title="Mean over ${r.costScenes} recorded scenes."` : ""}>${money(r.costUsd)}</span>`;
+const costCell = (r) => {
+  const title = [
+    r.costEstimate === true ? "Estimated." : "",
+    r.costScenes ? `Mean over ${r.costScenes} recorded scenes.` : "",
+  ].filter(Boolean).join(" ");
+  return `<span${title ? ` title="${esc(title)}"` : ""}>${money(r.costUsd)}</span>`;
+};
 const logos = {
   OpenAI: "openai.svg",
   Meta: "meta.png",
@@ -37,6 +43,7 @@ const logos = {
   DeepSeek: "deepseek-color.svg",
   NVIDIA: "nvidia-color.svg",
   Elorian: "elorian.svg",
+  "Thinking Machines": "inkling-lunge-logo.png",
 };
 const mono = new Set(["openai.svg", "grok.svg", "glm.png", "kimi.png", "elorian.svg"]);
 const tasks = [
@@ -51,12 +58,14 @@ const tasks = [
 ];
 const modelCell = (r) => {
   const logo = logos[r.vendor];
+  const title = r.vendor;
+  const effort = r.effort == null ? "" : String(r.effort).trim();
   const img = logo
     ? `<img class="model-logo${mono.has(logo) ? " mono" : ""}" src="assets/model-logos/${logo}" width="20" height="20" alt="" aria-hidden="true" />`
     : "";
-  return `<span class="model-identity" title="${esc(r.vendor)}">${img}<span><span class="model-name">${esc(
+  return `<span class="model-identity" title="${esc(title)}">${img}<span><span class="model-name">${esc(
     r.name,
-  )}</span> <span class="effort-text">${esc(r.effort)}</span>${
+  )}</span>${effort ? ` <span class="effort-text">${esc(effort)}</span>` : ""}${
     r.openWeight ? ' <span class="tag-text">open-weight</span>' : ""
   }</span></span>`;
 };
@@ -80,12 +89,13 @@ const taskRows = ranked
       `<tr><td class="model-cell">${modelCell(r)}</td><td class="num group-start">${score(
         r.layout,
       )}</td><td class="num">${score(r.motion)}</td>${tasks
-        .map(
-          (k, i) =>
-            `<td class="num${i === 0 ? " group-start" : ""}" style="background:color-mix(in srgb, var(--dv) ${(
-              r.tasks[k] * 0.16
-            ).toFixed(1)}%, transparent)">${score(r.tasks[k])}</td>`,
-        )
+        .map((k, i) => {
+          const value = r.tasks?.[k];
+          const heat = Number.isFinite(value)
+            ? ` style="background:color-mix(in srgb, var(--dv) ${(value * 0.16).toFixed(1)}%, transparent)"`
+            : "";
+          return `<td class="num${i === 0 ? " group-start" : ""}"${heat}>${score(value)}</td>`;
+        })
         .join("")}</tr>`,
   )
   .join("\n");
@@ -100,7 +110,9 @@ const providers = new Set(data.map((r) => r.vendor)).size;
 const gaps = data.map((r) => r.latentSim - r.dualVqa);
 const lsAbove = gaps.filter((g) => g > 0).length;
 const bestDv = Math.max(...data.map((r) => r.dualVqa));
-const overview = `The leaderboard covers ${data.length} configurations from ${providers} providers on all 288 test videos. It is updated as new models are evaluated.`;
+const mixedSceneCounts = data.some((r) => Number.isFinite(r.sceneCount) && r.sceneCount !== 288);
+const overview = `The leaderboard covers ${data.length} configurations from ${providers} providers${mixedSceneCounts ? "" : " on all 288 test videos"}. It is updated as new models are evaluated.`;
+const barsSub = `Overall score of the configuration with the highest Overall for each model${mixedSceneCounts ? "" : " on all 288 test scenes"}. Higher is better.`;
 const lede =
   (lsAbove === data.length
     ? `Latent Similarity is higher than Dual VQA for every configuration on the leaderboard, by ${score(
@@ -111,27 +123,36 @@ const lede =
     100 - bestDv,
   )}% of the source-correct answers in its reconstructions.`;
 html = html.replace(/(<p id="overview-count">)[\s\S]*?(<\/p>)/, `$1\n            ${overview}\n          $2`);
+html = html.replace(/(<p\b[^>]*\bid="bars-sub"[^>]*>)[\s\S]*?(<\/p>)/, `$1${barsSub}$2`);
 html = html.replace(/(<p id="results-lede">)[\s\S]*?(<\/p>)/, `$1\n            ${lede}\n          $2`);
 
-// Leaderboard date from the last commit that changed data.js.
+// Use the latest valid report date or commit day, including local report data.
+const validDay = (day) => {
+  if (typeof day !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(day)) return false;
+  const date = new Date(`${day}T12:00:00Z`);
+  return Number.isFinite(date.getTime()) && date.toISOString().slice(0, 10) === day;
+};
+const days = data.map((r) => r.sourceDate).filter(validDay);
 try {
   const day = execFileSync("git", ["log", "-1", "--format=%cs", "--", "data.js"], { cwd: root })
     .toString()
     .trim();
-  if (day) {
-    const label = new Date(`${day}T12:00:00Z`).toLocaleDateString("en-US", {
-      month: "long",
-      day: "numeric",
-      year: "numeric",
-      timeZone: "UTC",
-    });
-    html = html.replace(
-      /(<span class="updated" id="updated-stamp">)[^<]*(<\/span>)/,
-      `$1Leaderboard updated ${label}$2`,
-    );
-  }
+  if (validDay(day)) days.push(day);
 } catch {
-  // Not a git checkout. Keep the existing date.
+  // Outside a git checkout, report dates can still update the stamp.
+}
+const day = days.sort().pop();
+if (day) {
+  const label = new Date(`${day}T12:00:00Z`).toLocaleDateString("en-US", {
+    month: "long",
+    day: "numeric",
+    year: "numeric",
+    timeZone: "UTC",
+  });
+  html = html.replace(
+    /(<span class="updated" id="updated-stamp">)[^<]*(<\/span>)/,
+    `$1Leaderboard updated ${label}$2`,
+  );
 }
 
 // Content hashes so browsers fetch changed files.
