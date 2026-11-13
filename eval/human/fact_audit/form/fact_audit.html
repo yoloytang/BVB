@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>BVB 事实核查</title>
+  <style>
+    :root {
+      --bg: #f3efe6; --ink: #1c1914; --muted: #6a6358; --card: #fffdf8;
+      --line: #d8d0c4; --accent: #2c5c4f; --warn: #8a3b2d; --soft: #e8e1d4;
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; color: var(--ink); background: var(--bg);
+      font: 16px/1.5 ui-sans-serif, system-ui, "PingFang SC", "Microsoft YaHei", sans-serif; }
+    header, main { max-width: 1100px; margin: 0 auto; padding: 14px 18px; }
+    header { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
+    h1 { font-size: 20px; margin: 0; }
+    h2 { font-size: 18px; margin: 0 0 6px; }
+    .muted { color: var(--muted); font-size: 14px; }
+    .card { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 16px; margin: 14px 0; }
+    button { background: var(--accent); color: #fff; border: 0; border-radius: 8px; padding: 9px 14px;
+      font: inherit; font-size: 15px; cursor: pointer; }
+    button.secondary { background: #5b564c; }
+    button:disabled { opacity: .45; cursor: default; }
+    input[type=text], input[type=number], textarea { font: inherit; padding: 7px 9px; border: 1px solid var(--line);
+      border-radius: 6px; background: #fff; }
+    textarea { width: 100%; min-height: 44px; }
+    .bar { height: 8px; background: var(--soft); border-radius: 4px; overflow: hidden; min-width: 200px; }
+    .bar > div { height: 100%; background: var(--accent); }
+    .stage { display: inline-block; padding: 2px 10px; border-radius: 999px; font-size: 13px; font-weight: 600;
+      background: var(--soft); }
+    .stage.src { background: #f1dcc8; color: var(--warn); }
+    .grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin: 10px 0; }
+    .grid figure { margin: 0; position: relative; cursor: zoom-in; }
+    .grid img { width: 100%; display: block; border-radius: 4px; border: 1px solid var(--line); }
+    .grid figcaption { position: absolute; left: 4px; top: 3px; font-size: 11px; color: #fff;
+      background: rgba(0,0,0,.55); padding: 0 5px; border-radius: 3px; }
+    .q { font-weight: 600; margin: 8px 0; white-space: pre-wrap; }
+    .opts label, .tags label { display: block; padding: 4px 2px; cursor: pointer; }
+    .row { display: flex; gap: 14px; align-items: center; flex-wrap: wrap; margin: 8px 0; }
+    .tags { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); font-size: 14px; }
+    .locked { color: var(--muted); font-size: 14px; }
+    .err { color: var(--warn); font-size: 14px; min-height: 1.2em; }
+    #lightbox { position: fixed; inset: 0; background: rgba(0,0,0,.88); display: none; align-items: center;
+      justify-content: center; flex-direction: column; z-index: 10; }
+    #lightbox img { max-width: 94vw; max-height: 82vh; image-rendering: auto; }
+    #lightbox .row { color: #fff; }
+    @media (max-width: 700px) { .grid { grid-template-columns: repeat(2, 1fr); } }
+  </style>
+</head>
+<body>
+<header>
+  <h1>BVB 事实核查</h1>
+  <div class="row">
+    <div class="bar"><div id="progress" style="width:0%"></div></div>
+    <span id="progressText" class="muted"></span>
+    <button class="secondary" id="saveBtn">下载结果 JSON</button>
+  </div>
+</header>
+<main id="app"></main>
+
+<div id="lightbox">
+  <img id="lbImg" alt="" />
+  <div class="row">
+    <button class="secondary" id="lbPrev">← 上一帧</button>
+    <span id="lbText"></span>
+    <button class="secondary" id="lbNext">下一帧 →</button>
+    <button class="secondary" id="lbPlay">播放</button>
+    <button id="lbClose">关闭 (Esc)</button>
+  </div>
+</div>
+
+<script>
+const PACK = /*__PACK_JSON__*/null;
+const KEY = PACK ? `bvb-fact-${PACK.pack_id}` : "bvb-fact";
+const TAG_TEXT = {
+  object_identity_unclear: "物体身份不清（认不出是什么）",
+  occluded_or_out_of_view: "遮挡或不在画面中",
+  scale_unclear: "尺度 / 距离难以判断",
+  temporal_order_unclear: "时间先后看不清",
+  question_ambiguous: "题目本身有歧义",
+  other: "其他（请在备注说明）",
+};
+
+let state = load();
+function load() {
+  try { return JSON.parse(localStorage.getItem(KEY)) || { rater_id: "", answers: {} }; }
+  catch (e) { return { rater_id: "", answers: {} }; }
+}
+function persist() {
+  try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) { /* private mode: keep in memory */ }
+}
+function nowIso() { return new Date().toISOString(); }
+
+// A block is shown as groups: one per reconstruction, then the source.
+function groupsOf(block) {
+  const order = [];
+  const byFs = {};
+  for (const it of block.recon_items) {
+    if (!byFs[it.frameset]) { byFs[it.frameset] = []; order.push(it.frameset); }
+    byFs[it.frameset].push(it);
+  }
+  const groups = order.map(fs => ({ stage: "recon", frameset: fs, label: byFs[fs][0].label, items: byFs[fs] }));
+  groups.push({ stage: "source", frameset: block.source_items[0].frameset, label: "原视频", items: block.source_items });
+  return groups;
+}
+const allItems = PACK ? PACK.blocks.flatMap(b => b.recon_items.concat(b.source_items)) : [];
+function done(it) { return !!state.answers[it.item_id]; }
+function current() {
+  for (let bi = 0; bi < PACK.blocks.length; bi++) {
+    const groups = groupsOf(PACK.blocks[bi]);
+    for (let gi = 0; gi < groups.length; gi++) {
+      if (groups[gi].items.some(it => !done(it))) return { bi, gi, groups };
+    }
+  }
+  return null;
+}
+
+function el(tag, attrs = {}, ...kids) {
+  const n = document.createElement(tag);
+  for (const [k, v] of Object.entries(attrs)) {
+    if (k === "class") n.className = v; else if (k.startsWith("on")) n.addEventListener(k.slice(2), v);
+    else if (v !== false && v != null) n.setAttribute(k, v === true ? "" : v);
+  }
+  for (const kid of kids.flat()) if (kid != null) n.append(kid.nodeType ? kid : document.createTextNode(kid));
+  return n;
+}
+
+function updateProgress() {
+  const n = allItems.filter(done).length;
+  document.getElementById("progress").style.width = `${(100 * n / Math.max(allItems.length, 1)).toFixed(1)}%`;
+  document.getElementById("progressText").textContent = `${n} / ${allItems.length}`;
+}
+
+function render() {
+  const app = document.getElementById("app");
+  app.innerHTML = "";
+  updateProgress();
+  if (!PACK) { app.append(el("div", { class: "card" }, "这个文件没有内嵌题目包，请联系研究者。")); return; }
+  if (!state.rater_id) { app.append(intro()); return; }
+  const cur = current();
+  if (!cur) { app.append(finished()); return; }
+  const { bi, gi, groups } = cur;
+  const g = groups[gi];
+  if (!state.group_started) state.group_started = {};
+  const gk = `${bi}:${gi}`;
+  if (!state.group_started[gk]) { state.group_started[gk] = nowIso(); persist(); }
+
+  app.append(el("div", { class: "card" },
+    el("div", { class: "row" },
+      el("h2", {}, `场景 ${bi + 1} / ${PACK.blocks.length}`),
+      el("span", { class: g.stage === "source" ? "stage src" : "stage" },
+        g.stage === "source" ? "第二步：原视频" : `第一步：${g.label}（${gi + 1} / ${groups.length - 1}）`)),
+    el("p", { class: "muted" }, g.stage === "source"
+      ? "现在显示的是真实的原视频帧。请只根据这些帧独立回答同一批问题。前面的答案已经锁定，不能修改。"
+      : "下面是某个模型用简单几何体重建的场景。物体没有纹理，可能只是方块或圆柱的组合。请只根据这些帧回答；看不出来时选择“无法判断”，不要猜。"),
+    frameGrid(g.frameset)));
+  for (const it of g.items) app.append(itemCard(it));
+}
+
+function intro() {
+  const input = el("input", { type: "text", placeholder: "例如 姓名缩写或编号", value: state.rater_id || "" });
+  return el("div", { class: "card" },
+    el("h2", {}, "说明"),
+    el("p", {}, "每个场景分两步。第一步：看一个或几个“重建”版本的 16 张帧，回答关于房间的问题。第二步：看真实原视频的帧，再回答同样的问题。"),
+    el("p", {}, "请注意："),
+    el("ul", {},
+      el("li", {}, "每题提交后即锁定，不能返回修改；看到原视频后也不能回头改重建题。"),
+      el("li", {}, "只根据当前显示的帧作答。点击缩略图可放大，用 ← → 键逐帧查看。"),
+      el("li", {}, "看不清、认不出物体或题目有歧义时，勾选“无法判断”并选择原因。不要猜。"),
+      el("li", {}, "数量题填整数；选择题选一个选项。"),
+      el("li", {}, "进度会自动保存在本浏览器。完成后点击右上角“下载结果 JSON”，把文件发回给研究者。")),
+    el("div", { class: "row" }, el("label", {}, "评审员编号："), input,
+      el("button", { onclick: () => {
+        const v = input.value.trim();
+        if (!v) return;
+        state.rater_id = v; state.started_utc = nowIso(); persist(); render();
+      } }, "开始")));
+}
+
+function finished() {
+  return el("div", { class: "card" },
+    el("h2", {}, "全部完成，谢谢！"),
+    el("p", {}, "请点击下面的按钮下载结果文件，并把它发回给研究者。"),
+    el("button", { onclick: download }, "下载结果 JSON"));
+}
+
+function frameGrid(fs) {
+  const frames = PACK.framesets[fs] || [];
+  const grid = el("div", { class: "grid" });
+  frames.forEach((b64, i) => {
+    grid.append(el("figure", { onclick: () => openLightbox(fs, i) },
+      el("img", { src: `data:image/jpeg;base64,${b64}`, alt: `第 ${i + 1} 帧`, loading: "lazy" }),
+      el("figcaption", {}, `${i + 1}`)));
+  });
+  return el("div", {}, el("div", { class: "muted" }, `共 ${frames.length} 帧，按时间顺序排列。`), grid);
+}
+
+function itemCard(it) {
+  const a = state.answers[it.item_id];
+  const card = el("div", { class: "card" }, el("div", { class: "q" }, it.question));
+  if (a) {
+    card.append(el("div", { class: "locked" }, a.cannot_tell ? `已提交：无法判断（${a.reasons.map(t => TAG_TEXT[t] || t).join("；")}）` : `已提交：${a.answer}`));
+    return card;
+  }
+  const name = `a-${it.item_id}`;
+  let answerInput;
+  if (it.answer_format === "mc") {
+    answerInput = el("div", { class: "opts" }, it.options.map(opt => {
+      const letter = String(opt).trim().charAt(0).toUpperCase();
+      return el("label", {}, el("input", { type: "radio", name, value: letter }), " ", String(opt));
+    }));
+  } else {
+    answerInput = el("div", { class: "row" },
+      el("input", { type: "number", name, min: it.answer_format === "count" ? "0" : null,
+        step: it.answer_format === "count" ? "1" : "any", style: "width:120px" }),
+      el("span", { class: "muted" }, it.answer_format === "count" ? "填整数" : "填数字"));
+  }
+  const cannot = el("input", { type: "checkbox" });
+  const tags = el("div", { class: "tags" }, PACK.reason_tags.map(t =>
+    el("label", {}, el("input", { type: "checkbox", value: t }), " ", TAG_TEXT[t] || t)));
+  const note = el("textarea", { placeholder: "简短说明依据（可选；选择“其他”时必填）" });
+  const err = el("div", { class: "err" });
+  cannot.addEventListener("change", () => {
+    answerInput.querySelectorAll("input").forEach(i => { i.disabled = cannot.checked; if (cannot.checked) { i.checked = false; if (i.type === "number") i.value = ""; } });
+  });
+  const submit = el("button", { onclick: () => {
+    let answer = null;
+    if (!cannot.checked) {
+      if (it.answer_format === "mc") {
+        const c = answerInput.querySelector("input:checked"); answer = c ? c.value : null;
+      } else {
+        const v = answerInput.querySelector("input").value.trim(); answer = v === "" ? null : v;
+        if (answer != null && it.answer_format === "count" && !/^\d+$/.test(answer)) { err.textContent = "数量请填非负整数。"; return; }
+      }
+      if (answer == null) { err.textContent = "请作答，或勾选“无法判断”。"; return; }
+    }
+    const reasons = [...tags.querySelectorAll("input:checked")].map(i => i.value);
+    if (cannot.checked && !reasons.length) { err.textContent = "勾选“无法判断”时请至少选一个原因。"; return; }
+    if (reasons.includes("other") && !note.value.trim()) { err.textContent = "选择“其他”时请在备注里说明。"; return; }
+    state.answers[it.item_id] = {
+      item_id: it.item_id, stage: it.stage, qa_id: it.qa_id,
+      answer, cannot_tell: cannot.checked, reasons, note: note.value.trim(),
+      submitted_utc: nowIso(),
+    };
+    persist(); render();
+  } }, "提交（提交后不可修改）");
+  card.append(answerInput,
+    el("div", { class: "row" }, el("label", {}, cannot, " 无法判断")),
+    el("div", { class: "muted" }, "原因（无法判断时必选；能作答但有疑虑时也可勾选）："), tags, note,
+    el("div", { class: "row" }, submit, err));
+  return card;
+}
+
+let lb = { fs: null, i: 0, timer: null };
+function openLightbox(fs, i) { lb.fs = fs; lb.i = i; showLb(); document.getElementById("lightbox").style.display = "flex"; }
+function showLb() {
+  const frames = PACK.framesets[lb.fs];
+  lb.i = (lb.i + frames.length) % frames.length;
+  document.getElementById("lbImg").src = `data:image/jpeg;base64,${frames[lb.i]}`;
+  document.getElementById("lbText").textContent = `第 ${lb.i + 1} / ${frames.length} 帧`;
+}
+function closeLb() { stopPlay(); document.getElementById("lightbox").style.display = "none"; }
+function stopPlay() { if (lb.timer) { clearInterval(lb.timer); lb.timer = null; document.getElementById("lbPlay").textContent = "播放"; } }
+document.getElementById("lbPrev").onclick = () => { stopPlay(); lb.i--; showLb(); };
+document.getElementById("lbNext").onclick = () => { stopPlay(); lb.i++; showLb(); };
+document.getElementById("lbClose").onclick = closeLb;
+document.getElementById("lbPlay").onclick = () => {
+  if (lb.timer) { stopPlay(); return; }
+  lb.timer = setInterval(() => { lb.i++; showLb(); }, 500);
+  document.getElementById("lbPlay").textContent = "暂停";
+};
+document.addEventListener("keydown", e => {
+  if (document.getElementById("lightbox").style.display !== "flex") return;
+  if (e.key === "Escape") closeLb();
+  if (e.key === "ArrowLeft") { stopPlay(); lb.i--; showLb(); }
+  if (e.key === "ArrowRight") { stopPlay(); lb.i++; showLb(); }
+});
+
+function download() {
+  const data = {
+    instrument_id: PACK.instrument_id, instrument_version: PACK.instrument_version,
+    pack_id: PACK.pack_id, rater_slot: PACK.rater_slot, rater_id: state.rater_id,
+    pack_created_utc: PACK.created_utc, started_utc: state.started_utc || null,
+    exported_utc: nowIso(), complete: allItems.every(done),
+    group_started: state.group_started || {},
+    answers: allItems.filter(done).map(it => state.answers[it.item_id]),
+  };
+  const blob = new Blob([JSON.stringify(data, null, 2) + "\n"], { type: "application/json" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = `${PACK.pack_id}-${state.rater_id || "anon"}.json`;
+  document.body.append(a); a.click(); a.remove();
+}
+document.getElementById("saveBtn").onclick = () => { if (PACK) download(); };
+render();
+</script>
+</body>
+</html>
