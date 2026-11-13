@@ -3,9 +3,9 @@
 This study checks, question by question, whether a Dual VQA (DV) pass or fail
 on a reconstruction matches what a person can read from **the same frames the
 judge saw**. It answers reviewer zxyz's question of whether a DV fail means the
-fact was omitted or that a preserved fact was misread in a primitive render. It
-also records, for confirmed errors, whether the agent misperceived the fact or
-perceived it and failed to build it.
+fact was omitted or that a preserved fact was misread in a primitive render. For
+confirmed errors, it also records from the `.blend` whether the object is
+missing, misplaced, or present but not shown by the render camera.
 
 The study reuses existing renders. It does not rerun any agent or the judge.
 
@@ -70,8 +70,8 @@ python scripts/download_results.py \
 
 5. Have a third person fill `final_label` in `scored/adjudicate_labels.csv`.
    This file is blind: it shows no model and no DV result. Rerun step 4 with
-   `--labels`. Then fill `locus_todo.csv` for every confirmed error, using the
-   agent log and the `.blend`, and rerun with `--locus`.
+   `--labels`. Then fill `locus_todo.csv` for every confirmed error by
+   inspecting the `.blend`, and rerun with `--locus`.
 
 ## Labels
 
@@ -82,10 +82,20 @@ python scripts/download_results.py \
 | `undecidable` | Human answers the source correctly, but cannot answer from the reconstruction frames |
 | `source_unverified` | Human cannot reach the benchmark answer on the source frames; reported separately, not in the main table |
 
-The locus labels are `perception`, `implementation`, `both` and `unclear`.
-`perception` means the agent's own log states the fact wrongly.
-`implementation` means the log states it correctly, but the `.blend` does not
-realize it. Record the evidence for each.
+For each confirmed error, open the `.blend` and record where the error lives:
+
+| Locus | Meaning |
+| --- | --- |
+| `omitted` | The object or event is absent from the scene |
+| `misplaced` | It is present, but its count, position or timing is wrong |
+| `present_not_visible` | It is correct in the scene, but the render camera never shows it clearly |
+| `unclear` | The `.blend` does not settle it |
+
+Record the evidence for each. `agent_meta/*.json` holds only run statistics
+(turns, cost, tokens), not the agent's reasoning, so this sheet cannot tell a
+misperceived fact from one the agent perceived but failed to build. That
+question needs a separate probe that asks the same model the question on the
+source frames.
 
 ## Outputs
 

@@ -9,9 +9,9 @@ Answers are matched with the benchmark's own ``semantic_correct`` rules.
 
 Two raters per unit. Agreement gives the final label; disagreements go to
 ``adjudicate_labels.csv`` (blind: no model, no DV result). Units whose final
-label is ``error`` go to ``locus_todo.csv``, where an adjudicator with access
-to the agent log and .blend records whether the fact was misperceived or
-perceived but not built. Fill those files and pass them back with
+label is ``error`` go to ``locus_todo.csv``, where an adjudicator opens the
+.blend and records whether the object is omitted, misplaced, or present
+but not visible in the render. Fill those files and pass them back with
 ``--labels`` and ``--locus``.
 
 All proportions are design-weighted (weight = 1 / inclusion probability) and
@@ -327,10 +327,8 @@ def main() -> None:
         qa = metadata[u["qa_id"]]
         locus_rows.append({"case_id": u["case_id"], "run": u["run"], "scene": u["scene"], "qa_id": u["qa_id"],
                            "task": u["task"], "question": qa["question"], "ground_truth": qa["ground_truth"],
-                           "agent_meta": f"{u['run']}/agent_meta/{u['scene']}.json",
                            "blend": f"{u['run']}/blends/{u['scene']}.blend",
                            "object_in_blend": filled.get("object_in_blend", ""),
-                           "agent_stated_fact": filled.get("agent_stated_fact", ""),
                            "locus": tag, "evidence": filled.get("evidence", "")})
 
     agreement = {

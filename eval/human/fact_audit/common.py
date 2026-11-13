@@ -76,7 +76,14 @@ REASON_TAGS = [
     "question_ambiguous",
     "other",
 ]
-LOCUS_TAGS = ["perception", "implementation", "both", "unclear"]
+# Where a confirmed error lives in the .blend (agent_meta holds only run
+# statistics, so the agent's own account of the scene is not available):
+#   omitted              - the object or event is absent from the scene
+#   misplaced            - present, but its count, position or timing is wrong
+#   present_not_visible  - correct in the scene, but the render camera never
+#                          shows it clearly (a camera/visibility failure)
+#   unclear              - cannot tell from the .blend
+LOCUS_TAGS = ["omitted", "misplaced", "present_not_visible", "unclear"]
 
 
 def iter_jsonl(path: Path) -> Iterable[dict[str, Any]]:
