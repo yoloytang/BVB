@@ -57,7 +57,7 @@ def answer_format(qa: dict) -> str:
     return "mc" if qa.get("options") else "number"
 
 
-def build_packs(units: list[dict], metadata: dict, seed: int, *, pilot: bool) -> dict[str, dict]:
+def build_packs(units: list[dict], metadata: dict, seed: int, *, kind: str) -> dict[str, dict]:
     """Return rater -> pack skeleton (frames referenced by frameset key)."""
     by_rater_scene: dict[str, dict[str, list[dict]]] = defaultdict(lambda: defaultdict(list))
     for unit in units:
@@ -66,7 +66,7 @@ def build_packs(units: list[dict], metadata: dict, seed: int, *, pilot: bool) ->
 
     packs: dict[str, dict] = {}
     for rater in sorted(by_rater_scene):
-        rng = random.Random(f"{seed}:{rater}:{'pilot' if pilot else 'main'}")
+        rng = random.Random(f"{seed}:{rater}:{kind}")
         scenes = sorted(by_rater_scene[rater])
         rng.shuffle(scenes)
         blocks = []
@@ -112,11 +112,12 @@ def build_packs(units: list[dict], metadata: dict, seed: int, *, pilot: bool) ->
                 "source_items": source_items,
             })
         packs[rater] = {
-            "pack_id": f"fact-{'pilot' if pilot else 'main'}-{rater}",
+            "pack_id": f"fact-{kind}-{rater}",
             "rater_slot": rater,
             "instrument_id": INSTRUMENT_ID,
             "instrument_version": INSTRUMENT_VERSION,
-            "is_pilot": pilot,
+            "is_pilot": kind == "pilot",
+            "mode": "video" if kind == "review" else "frames",
             "reason_tags": REASON_TAGS,
             "blocks": blocks,
         }
@@ -143,7 +144,7 @@ def main() -> None:
         raise SystemExit(f"{out_dir} exists; pass --force to rebuild")
     out_dir.mkdir(parents=True, exist_ok=True)
 
-    packs = build_packs(units, metadata, design["seed"], pilot=args.pilot)
+    packs = build_packs(units, metadata, design["seed"], kind="pilot" if args.pilot else "main")
 
     # Extract every frameset once; record provenance for the analysis.
     seed = design["seed"]

@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import csv
 import json
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -79,11 +80,12 @@ class FactAuditPipelineTest(unittest.TestCase):
             "--per-stratum", "5", "--raters", "3", "--pilot-scenes-per-source", "1")
         run("export_pack.py", "--study", str(self.study), *common_args, "--vsi-bench", str(self.vsi))
 
-    def fake_responses(self, flip_one: bool = False, source_first_slot: str | None = None):
+    def fake_responses(self, flip_one: bool = False, source_first_slot: str | None = None,
+                       undecidable_slot: str | None = None):
         resp_dir = self.study / "responses"
         resp_dir.mkdir()
         sample = {u["unit_id"]: u for u in common.iter_jsonl(self.study / "sample.jsonl")}
-        flipped = False
+        flipped = undecided = False
         for pack_path in sorted((self.study / "packs").glob("pack-*.json")):
             pack = json.loads(pack_path.read_text())
             answers, t = [], 0
@@ -103,8 +105,13 @@ class FactAuditPipelineTest(unittest.TestCase):
                         if flip_one and not flipped and pack["rater_slot"] == unit["raters"][0]:
                             answer, flipped = ("B" if answer == gt else gt) if item["answer_format"] == "mc" else (
                                 "9" if answer == gt else gt), True
+                    cannot = False
+                    if (undecidable_slot == pack["rater_slot"] and item["stage"] == "recon"
+                            and not undecided):
+                        answer, cannot, undecided = None, True, True
                     answers.append({"item_id": item["item_id"], "stage": item["stage"],
-                                    "answer": answer, "cannot_tell": False, "reasons": [], "note": "",
+                                    "answer": answer, "cannot_tell": cannot,
+                                    "reasons": ["occluded_or_out_of_view"] if cannot else [], "note": "",
                                     "submitted_utc": f"2026-11-13T00:{t // 60:02d}:{t % 60:02d}Z"})
             (resp_dir / f"{pack['pack_id']}.json").write_text(json.dumps({
                 "instrument_id": common.INSTRUMENT_ID, "pack_id": pack["pack_id"],
@@ -164,6 +171,50 @@ class FactAuditPipelineTest(unittest.TestCase):
         self.pipeline()
         summary = self.score(self.fake_responses(source_first_slot="r01"))
         self.assertGreater(summary["order_violations"], 0)
+
+
+    @unittest.skipUnless(shutil.which("ffmpeg"), "ffmpeg needed for the review round")
+    def test_full_video_review_round(self):
+        self.pipeline()
+        main = self.score(self.fake_responses(flip_one=True, undecidable_slot="r02"))
+        self.assertGreaterEqual(main["review_candidates"]["n"], 2)
+        run("export_review.py", "--study", str(self.study), "--scored", str(self.study / "scored"),
+            "--results-dir", str(self.results), "--qa-metadata", str(self.meta_path), "--vsi-bench", str(self.vsi))
+        review_dir = self.study / "packs_review"
+        zips = sorted(review_dir.glob("survey-review-*.zip"))
+        self.assertTrue(zips)
+        for folder in (p for p in review_dir.glob("survey-review-*") if p.is_dir()):
+            html = (folder / "survey.html").read_text()
+            self.assertIn('"mode": "video"', html)
+            for secret in ["strong", "weak", "dv_pass", "ground_truth", "arkitscenes_0"]:
+                self.assertNotIn(secret, html)
+            pack = json.loads(html.split("const PACK = ", 1)[1].split(";\nconst KEY", 1)[0])
+            for path in pack["videos"].values():
+                self.assertTrue((folder / path).is_file(), path)
+        # Every rater answers everything correctly with the full video.
+        resp = self.study / "responses_review"
+        resp.mkdir()
+        sample = {u["unit_id"]: u for u in common.iter_jsonl(self.study / "sample.jsonl")}
+        for pack_path in review_dir.glob("pack-review-*.json"):
+            pack = json.loads(pack_path.read_text())
+            answers = []
+            for block in pack["blocks"]:
+                for item in block["recon_items"] + block["source_items"]:
+                    qa_id = item.get("qa_id") or sample[item["unit_id"]]["qa_id"]
+                    answers.append({"item_id": item["item_id"], "stage": item["stage"],
+                                    "answer": self.meta[qa_id]["ground_truth"], "cannot_tell": False,
+                                    "reasons": [], "note": "", "submitted_utc": "2026-11-14T00:00:00Z"})
+            (resp / f"{pack['pack_id']}.json").write_text(json.dumps({
+                "instrument_id": common.REVIEW_INSTRUMENT_ID, "pack_id": pack["pack_id"],
+                "rater_slot": pack["rater_slot"], "answers": answers}))
+        out = self.study / "scored_review"
+        run("score_review.py", "--study", str(self.study), "--scored", str(self.study / "scored"),
+            "--responses", str(resp), "--out", str(out), "--qa-metadata", str(self.meta_path), "--bootstrap", "20")
+        summary = json.loads((out / "summary.json").read_text())
+        self.assertEqual(summary["rater_level"]["from_undecidable"], {"retained": 1})
+        self.assertEqual(summary["n_with_agreed_review_label"], summary["n_candidates"])
+        # Main results are untouched by the review round.
+        self.assertEqual(json.loads((self.study / "scored" / "summary.json").read_text())["n_units"], main["n_units"])
 
 
 class JudgeFrameParityTest(unittest.TestCase):

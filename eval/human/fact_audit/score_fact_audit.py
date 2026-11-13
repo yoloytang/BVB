@@ -51,16 +51,17 @@ from common import (
     run_code,
     src_item_id,
     write_json,
+    write_jsonl,
 )
 
 
 # ----------------------------------------------------------------- loading
-def load_responses(resp_dir: Path) -> dict[str, dict]:
+def load_responses(resp_dir: Path, instrument_id: str = INSTRUMENT_ID) -> dict[str, dict]:
     """rater_slot -> response; when a slot has several files keep the most complete."""
     out: dict[str, dict] = {}
     for path in sorted(resp_dir.glob("*.json")):
         data = json.loads(path.read_text(encoding="utf-8"))
-        if data.get("instrument_id") != INSTRUMENT_ID:
+        if data.get("instrument_id") != instrument_id:
             continue
         slot = data.get("rater_slot") or data["pack_id"].rsplit("-", 1)[-1]
         data["_file"] = path.name
@@ -226,6 +227,7 @@ def main() -> None:
 
     rows, adjudicate, pair_labels, pair_src, pair_rec = [], [], [], [], []
     reason_counts: dict[str, Counter] = defaultdict(Counter)
+    review: list[dict] = []
     for unit in units:
         qa = metadata[unit["qa_id"]]
         per_rater = []
@@ -267,6 +269,19 @@ def main() -> None:
                 reason_counts[final][tag] += 1
         rows.append(dict(unit, case_id=cid, final=final, final_how=how,
                          rater_labels=";".join(f"{r['slot']}={r['label']}" for r in per_rater)))
+        # Full-video review round: cases where 16 frames may have been the limit.
+        why = []
+        if any(r["label"] in (H_UNDECIDABLE, SRC_UNVERIFIED) for r in per_rater):
+            why.append("rater_could_not_verify")
+        if all(labels) and len(set(labels)) > 1:
+            why.append("raters_disagree")
+        if final in (H_RETAINED, H_ERROR) and unit["dv_pass"] != (final == H_RETAINED):
+            why.append("human_vs_dv")
+        if why and all(labels):
+            review.append({"unit_id": unit["unit_id"], "scene": unit["scene"], "dataset": unit["dataset"],
+                           "run": unit["run"], "qa_id": unit["qa_id"], "raters": unit["raters"],
+                           "main_final": final, "main_rater_labels": {r["slot"]: r["label"] for r in per_rater},
+                           "why": why})
 
     resolved = [u for u in rows if u["final"] != PENDING]
     runs = list(dict.fromkeys(u["run"] for u in units))
@@ -354,6 +369,7 @@ def main() -> None:
     write_csv(args.out / "adjudicate_labels.csv", adjudicate, adj_fields)
     write_csv(args.out / "locus_todo.csv", locus_rows, list(locus_rows[0].keys()) if locus_rows else ["case_id"])
     write_csv(args.out / "order_violations.csv", violations, ["rater_slot", "scene", "last_recon", "first_source"])
+    write_jsonl(args.out / "review_candidates.jsonl", review)
     write_json(args.out / "summary.json", {
         "n_units": len(rows),
         "n_resolved": len(resolved),
@@ -363,6 +379,8 @@ def main() -> None:
                       for slot, r in responses.items()},
         "missing_raters": sorted(set(design["raters"]) - set(responses)),
         "order_violations": len(violations),
+        "review_candidates": {"n": len(review),
+                              "by_reason": dict(Counter(w for r in review for w in r["why"]))},
         "agreement": agreement,
         "point_estimates": point,
         "bootstrap": {"reps": args.bootstrap, "unit": "scene within dataset", "seed": args.seed},

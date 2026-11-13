@@ -73,6 +73,35 @@ python scripts/download_results.py \
    `--labels`. Then fill `locus_todo.csv` for every confirmed error by
    inspecting the `.blend`, and rerun with `--locus`.
 
+6. Optional full-video review. Main scoring writes `review_candidates.jsonl`:
+   units where a rater could not verify the answer on 16 frames, where the
+   raters disagreed, or where the human label contradicts DV. Run this only
+   after the main round is locked. The same two raters see those units again
+   with the full reconstruction video and then the full source video,
+   re-encoded to at most 640 px wide. This step needs `ffmpeg`.
+
+   ```bash
+   python eval/human/fact_audit/export_review.py --study eval/human/fact_audit/study/wave1 \
+     --scored eval/human/fact_audit/study/wave1/scored
+   ```
+
+   Send `packs_review/survey-review-rNN.zip` to rater `rNN`. The rater unzips
+   it and opens `survey.html`. Put the returned JSON files in
+   `responses_review/` and score them:
+
+   ```bash
+   python eval/human/fact_audit/score_review.py --study eval/human/fact_audit/study/wave1 \
+     --scored eval/human/fact_audit/study/wave1/scored \
+     --responses eval/human/fact_audit/study/wave1/responses_review \
+     --out eval/human/fact_audit/study/wave1/scored_review
+   ```
+
+   The review round never changes the main labels. `rater_transitions.csv`
+   shows how each rater's 16-frame label moved with the full video, and
+   `main_vs_review.csv` puts every main estimate beside a sensitivity version
+   in which reviewed units take their agreed review label. Report it as
+   sensitivity to frame sampling, next to the main table.
+
 ## Labels
 
 | Label | Meaning |

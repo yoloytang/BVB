@@ -41,6 +41,8 @@
     .tags { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); font-size: 14px; }
     .locked { color: var(--muted); font-size: 14px; }
     .err { color: var(--warn); font-size: 14px; min-height: 1.2em; }
+    video.player { width: 100%; max-height: 70vh; background: #000; border-radius: 6px; margin: 10px 0 4px; }
+    select { font: inherit; font-size: 14px; padding: 3px 6px; }
     #lightbox { position: fixed; inset: 0; background: rgba(0,0,0,.88); display: none; align-items: center;
       justify-content: center; flex-direction: column; z-index: 10; }
     #lightbox img { max-width: 94vw; max-height: 82vh; image-rendering: auto; }
@@ -73,6 +75,7 @@
 <script>
 const PACK = /*__PACK_JSON__*/null;
 const KEY = PACK ? `bvb-fact-${PACK.pack_id}` : "bvb-fact";
+const VIDEO = !!(PACK && PACK.mode === "video");
 const TAG_TEXT = {
   object_identity_unclear: "物体身份不清（认不出是什么）",
   occluded_or_out_of_view: "遮挡或不在画面中",
@@ -152,21 +155,24 @@ function render() {
       el("span", { class: g.stage === "source" ? "stage src" : "stage" },
         g.stage === "source" ? "第二步：原视频" : `第一步：${g.label}（${gi + 1} / ${groups.length - 1}）`)),
     el("p", { class: "muted" }, g.stage === "source"
-      ? "现在显示的是真实的原视频帧。请只根据这些帧独立回答同一批问题。前面的答案已经锁定，不能修改。"
-      : "下面是某个模型用简单几何体重建的场景。物体没有纹理，可能只是方块或圆柱的组合。请只根据这些帧回答；看不出来时选择“无法判断”，不要猜。"),
-    frameGrid(g.frameset)));
+      ? `现在显示的是真实的原视频${VIDEO ? "（完整视频）" : "帧"}。请只根据${VIDEO ? "这段视频" : "这些帧"}独立回答同一批问题。前面的答案已经锁定，不能修改。`
+      : `下面是某个模型用简单几何体重建的场景${VIDEO ? "（完整视频）" : ""}。物体没有纹理，可能只是方块或圆柱的组合。请只根据${VIDEO ? "这段视频" : "这些帧"}回答；看不出来时选择“无法判断”，不要猜。`),
+    VIDEO ? videoPlayer(g.frameset) : frameGrid(g.frameset)));
   for (const it of g.items) app.append(itemCard(it));
 }
 
 function intro() {
   const input = el("input", { type: "text", placeholder: "例如 姓名缩写或编号", value: state.rater_id || "" });
+  const lead = VIDEO
+    ? "这是复核轮。你在上一轮已经回答过这些题，这次可以看完整视频。每个场景同样分两步：先看重建视频回答问题，再看原视频回答同样的问题。本轮答案单独统计，不会修改上一轮的结果；请根据视频独立作答，不必和上一轮保持一致。"
+    : "每个场景分两步。第一步：看一个或几个“重建”版本的 16 张帧，回答关于房间的问题。第二步：看真实原视频的帧，再回答同样的问题。";
   return el("div", { class: "card" },
-    el("h2", {}, "说明"),
-    el("p", {}, "每个场景分两步。第一步：看一个或几个“重建”版本的 16 张帧，回答关于房间的问题。第二步：看真实原视频的帧，再回答同样的问题。"),
+    el("h2", {}, VIDEO ? "说明（复核轮）" : "说明"),
+    el("p", {}, lead),
     el("p", {}, "请注意："),
     el("ul", {},
       el("li", {}, "每题提交后即锁定，不能返回修改；看到原视频后也不能回头改重建题。"),
-      el("li", {}, "只根据当前显示的帧作答。点击缩略图可放大，用 ← → 键逐帧查看。"),
+      el("li", {}, VIDEO ? "只根据当前显示的视频作答，可以暂停、拖动和调整播放速度。" : "只根据当前显示的帧作答。点击缩略图可放大，用 ← → 键逐帧查看。"),
       el("li", {}, "看不清、认不出物体或题目有歧义时，勾选“无法判断”并选择原因。不要猜。"),
       el("li", {}, "数量题填整数；选择题选一个选项。"),
       el("li", {}, "进度会自动保存在本浏览器。完成后点击右上角“下载结果 JSON”，把文件发回给研究者。")),
@@ -183,6 +189,15 @@ function finished() {
     el("h2", {}, "全部完成，谢谢！"),
     el("p", {}, "请点击下面的按钮下载结果文件，并把它发回给研究者。"),
     el("button", { onclick: download }, "下载结果 JSON"));
+}
+
+function videoPlayer(fs) {
+  const src = (PACK.videos || {})[fs];
+  if (!src) return el("div", { class: "err" }, "找不到这段视频。请确认解压后的 videos 文件夹和 survey.html 在同一目录。");
+  const v = el("video", { src, controls: true, playsinline: true, preload: "auto", class: "player" });
+  const rate = el("select", { onchange: () => { v.playbackRate = Number(rate.value); } },
+    ["0.5", "1", "1.5", "2"].map(r => el("option", { value: r, selected: r === "1" }, `${r}×`)));
+  return el("div", {}, v, el("div", { class: "row muted" }, "可以暂停、拖动进度条、反复观看。播放速度：", rate));
 }
 
 function frameGrid(fs) {

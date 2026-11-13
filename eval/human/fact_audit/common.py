@@ -27,6 +27,8 @@ from dual_vqa_scoring import (  # noqa: E402
 
 INSTRUMENT_ID = "bvb-human-fact-v1"
 INSTRUMENT_VERSION = "1.0"
+# Optional second round with full videos; scored separately, never merged.
+REVIEW_INSTRUMENT_ID = "bvb-human-fact-review-v1"
 SOURCE_ORDER = ["arkitscenes", "scannet", "scannetpp"]
 
 # Judge frame protocol, copied from eval/dual_vqa_metric.py. The test suite
