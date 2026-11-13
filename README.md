@@ -11,7 +11,7 @@
 
 <p align="center">
   <a href="https://yoloytang.me/BVB/#leaderboard">
-    <img src="assets/bvb-leaderboard.png?v=71f617eec3c9" alt="BVB Overall leaderboard: best configuration per model" width="1200">
+    <img src="assets/bvb-leaderboard.png?v=1e52233ebd4d" alt="BVB Overall leaderboard: best configuration per model" width="1200">
   </a>
 </p>
 
@@ -30,6 +30,7 @@ limit. External asset libraries are not allowed.
 
 ## Updates
 
+- **[11/12/2026]** Added Inkling Small (xhigh) and Inkling 2 Small (max) to the [leaderboard](https://yoloytang.me/BVB/#leaderboard).
 - **[11/11/2026]** Added Claude Fable 5.2 (xhigh) to the [leaderboard](https://yoloytang.me/BVB/#leaderboard).
 - **[10/27/2026]** Added GPT-6.1 Terra (xhigh), Glimpse (max), and Nemotron 3.5 Super VL (max) to the [leaderboard](https://yoloytang.me/BVB/#leaderboard).
 - **[10/19/2026] ⚠️ For users evaluating their own models:** We fixed missing multiple-choice options in Dual VQA evaluation. Please use the latest [`dual_vqa_metric.py`](eval/dual_vqa_metric.py) and re-download [`original_answers.jsonl`](https://huggingface.co/datasets/yoloytang/BVB-results/blob/main/_dual_vqa_shared/original_answers.jsonl).
