@@ -18,7 +18,7 @@
         })[c],
     );
   const score = (n, digits = 1) =>
-    Number.isFinite(n) ? n.toFixed(digits) : "n/a";
+    Number.isFinite(n) ? (Math.round(n * 10 ** digits) / 10 ** digits).toFixed(digits) : "n/a";
   const money = (n) => Number.isFinite(n) ? `$${score(n, 3)}` : "n/a";
   const rowKey = (r) => r.run || [r.family, r.harness ?? "", r.effort ?? ""].join("|");
   const effortText = (r) => r.effort == null ? "" : String(r.effort).trim();

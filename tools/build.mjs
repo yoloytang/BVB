@@ -20,7 +20,7 @@ const data = sandbox.window.BVB_DATA;
 
 const esc = (v) =>
   String(v).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
-const score = (n, d = 1) => (Number.isFinite(n) ? n.toFixed(d) : "n/a");
+const score = (n, d = 1) => (Number.isFinite(n) ? (Math.round(n * 10 ** d) / 10 ** d).toFixed(d) : "n/a");
 const money = (n) => Number.isFinite(n) ? `$${score(n, 3)}` : "n/a";
 const costCell = (r) => {
   const title = [
