@@ -30,6 +30,7 @@ limit. External asset libraries are not allowed.
 
 ## Updates
 
+- **[11/20/2026]** Thanks to Thinking Machines Lab for evaluating [Inkling 2 Mini](https://thinkingmachines.ai/news/inkling-2-mini/) on BVB and reporting **68.4% Overall** at **$0.162 per scene**! We have added its results to the [BVB leaderboard](https://yoloytang.me/BVB/#leaderboard).
 - **[11/12/2026]** Thinking Machines Lab reported Inkling 2 Small (max) [results](https://thinkingmachines.ai/model-card/inkling-2-small/#5-evaluations) on our BVB! We have added them to the [BVB leaderboard](https://yoloytang.me/BVB/#leaderboard).
 - **[11/11/2026]** Added Claude Fable 5.2 (xhigh) to the [leaderboard](https://yoloytang.me/BVB/#leaderboard).
 - **[10/27/2026]** Added GPT-6.1 Terra (xhigh), Glimpse (max), and Nemotron 3.5 Super VL (max) to the [leaderboard](https://yoloytang.me/BVB/#leaderboard).
