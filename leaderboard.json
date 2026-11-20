@@ -653,7 +653,7 @@
       "route_planning": null,
       "obj_appearance_order": null
     },
-    "costUsd": null,
+    "costUsd": 0.162,
     "runtimeMin": null,
     "run": null,
     "source": "user-provided provider results screenshot; official release",
