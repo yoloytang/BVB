@@ -146,7 +146,7 @@
       src
         ? `<img class="model-logo${isMono(r) ? " mono" : ""}" src="${escape(src)}" width="20" height="20" alt="" aria-hidden="true" />`
         : ""
-    }<span><span class="model-name">${escape(r.name)}</span>${effortHtml(r)}${r.openWeight ? ' <span class="tag-text">open-weight</span>' : ""}</span></span>`;
+    }<span><span class="model-name">${escape(r.name)}</span>${effortHtml(r)}${r.openWeight ? ' <span class="tag-text">open-weight</span>' : ""}${r.sourceUrl ? ` <a class="tag-text" href="${escape(r.sourceUrl)}" title="Reported result from ${escape(r.vendor)}" target="_blank" rel="noopener noreferrer">reported</a>` : ""}</span></span>`;
   };
   const legendHtml = (vendors) =>
     vendorOrder
@@ -295,24 +295,21 @@
   // Facts derived from the data, so the prose follows the leaderboard.
   function writeFacts() {
     const providerCount = new Set(data.map((r) => r.vendor)).size;
-    const lsAbove = data.filter((r) => r.latentSim > r.dualVqa).length;
+    const paired = data.filter((r) => Number.isFinite(r.latentSim) && Number.isFinite(r.dualVqa));
+    const lsAbove = paired.filter((r) => r.latentSim > r.dualVqa).length;
     $("overview-count").textContent = `The leaderboard covers ${data.length} configurations from ${providerCount} providers${mixedSceneCounts ? "" : " on all 288 test videos"}. It is updated as new models are evaluated.`;
-    const gaps = data.map((r) => r.latentSim - r.dualVqa);
-    const bestDv = Math.max(...data.map((r) => r.dualVqa));
-    $("results-lede").textContent =
-      lsAbove === data.length
-        ? `Latent Similarity is higher than Dual VQA for every configuration on the leaderboard, by ${score(
+    const gaps = paired.map((r) => r.latentSim - r.dualVqa);
+    const bestDv = Math.max(...paired.map((r) => r.dualVqa));
+    $("results-lede").textContent = paired.length
+      ? (lsAbove === paired.length
+        ? `Latent Similarity is higher than Dual VQA for all ${paired.length} configurations with both metrics available, by ${score(
             Math.min(...gaps),
-          )} to ${score(Math.max(...gaps))} points. The highest Dual VQA is ${score(
-            bestDv,
-          )}, so every configuration loses at least ${score(
-            100 - bestDv,
-          )}% of the source-correct answers in its reconstructions.`
-        : `Latent Similarity is higher than Dual VQA for ${lsAbove} of the ${data.length} configurations on the leaderboard. The highest Dual VQA is ${score(
-            bestDv,
-          )}, so every configuration loses at least ${score(
-            100 - bestDv,
-          )}% of the source-correct answers in its reconstructions.`;
+          )} to ${score(Math.max(...gaps))} points.`
+        : `Latent Similarity is higher than Dual VQA for ${lsAbove} of the ${paired.length} configurations with both metrics available.`) +
+        ` The highest Dual VQA among these configurations is ${score(bestDv)}, so each loses at least ${score(
+          100 - bestDv,
+        )}% of the source-correct answers in its reconstructions.`
+      : "Dual VQA and Latent Similarity have not been reported together for any configuration.";
   }
   writeFacts();
 
@@ -328,13 +325,14 @@
       const selectionAxis = barsAxis === "costUsd" ? "overall" : barsAxis;
       const best = new Map();
       for (const r of data) {
+        if (!Number.isFinite(r[selectionAxis])) continue;
         const k = `${r.family}|${r.harness}`;
         const b = best.get(k);
         if (!b || r[selectionAxis] > b[selectionAxis]) best.set(k, r);
       }
       rows = [...best.values()];
     }
-    if (barsAxis === "costUsd") rows = rows.filter((r) => Number.isFinite(r.costUsd) && r.costUsd > 0);
+    rows = rows.filter((r) => Number.isFinite(r[barsAxis]) && (barsAxis !== "costUsd" || r.costUsd > 0));
     return [...rows].sort((a, b) => b[barsAxis] - a[barsAxis] || a.rank - b.rank);
   }
   // Match multicolor marks using their local logo colors. Each gradient spans
@@ -1325,3 +1323,4 @@
     setTimeout(() => (button.textContent = "Copy BibTeX"), 2500);
   });
 })();
+

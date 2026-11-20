@@ -67,7 +67,7 @@ const modelCell = (r) => {
     r.name,
   )}</span>${effort ? ` <span class="effort-text">${esc(effort)}</span>` : ""}${
     r.openWeight ? ' <span class="tag-text">open-weight</span>' : ""
-  }</span></span>`;
+  }${r.sourceUrl ? ` <a class="tag-text" href="${esc(r.sourceUrl)}" title="Reported result from ${esc(r.vendor)}" target="_blank" rel="noopener noreferrer">reported</a>` : ""}</span></span>`;
 };
 const ranked = [...data].sort((a, b) => b.overall - a.overall || a.rank - b.rank);
 const cell = (key, text) => `<td class="num${key === "overall" ? " sorted" : ""}">${text}</td>`;
@@ -107,21 +107,23 @@ html = html.replace(/<tbody id="task-body">[\s\S]*?<\/tbody>/, `<tbody id="task-
 // Text that follows the data. The same sentences are written by writeFacts()
 // in app.js, and these copies serve readers without JavaScript.
 const providers = new Set(data.map((r) => r.vendor)).size;
-const gaps = data.map((r) => r.latentSim - r.dualVqa);
+const paired = data.filter((r) => Number.isFinite(r.latentSim) && Number.isFinite(r.dualVqa));
+const gaps = paired.map((r) => r.latentSim - r.dualVqa);
 const lsAbove = gaps.filter((g) => g > 0).length;
-const bestDv = Math.max(...data.map((r) => r.dualVqa));
+const bestDv = Math.max(...paired.map((r) => r.dualVqa));
 const mixedSceneCounts = data.some((r) => Number.isFinite(r.sceneCount) && r.sceneCount !== 288);
 const overview = `The leaderboard covers ${data.length} configurations from ${providers} providers${mixedSceneCounts ? "" : " on all 288 test videos"}. It is updated as new models are evaluated.`;
 const barsSub = `Overall score of the configuration with the highest Overall for each model${mixedSceneCounts ? "" : " on all 288 test scenes"}. Higher is better.`;
-const lede =
-  (lsAbove === data.length
-    ? `Latent Similarity is higher than Dual VQA for every configuration on the leaderboard, by ${score(
+const lede = paired.length
+  ? (lsAbove === paired.length
+    ? `Latent Similarity is higher than Dual VQA for all ${paired.length} configurations with both metrics available, by ${score(
         Math.min(...gaps),
       )} to ${score(Math.max(...gaps))} points.`
-    : `Latent Similarity is higher than Dual VQA for ${lsAbove} of the ${data.length} configurations on the leaderboard.`) +
-  ` The highest Dual VQA is ${score(bestDv)}, so every configuration loses at least ${score(
+    : `Latent Similarity is higher than Dual VQA for ${lsAbove} of the ${paired.length} configurations with both metrics available.`) +
+  ` The highest Dual VQA among these configurations is ${score(bestDv)}, so each loses at least ${score(
     100 - bestDv,
-  )}% of the source-correct answers in its reconstructions.`;
+  )}% of the source-correct answers in its reconstructions.`
+  : "Dual VQA and Latent Similarity have not been reported together for any configuration.";
 html = html.replace(/(<p id="overview-count">)[\s\S]*?(<\/p>)/, `$1\n            ${overview}\n          $2`);
 html = html.replace(/(<p\b[^>]*\bid="bars-sub"[^>]*>)[\s\S]*?(<\/p>)/, `$1${barsSub}$2`);
 html = html.replace(/(<p id="results-lede">)[\s\S]*?(<\/p>)/, `$1\n            ${lede}\n          $2`);
@@ -164,3 +166,4 @@ for (const file of ["styles.css", "data.js", "gallery.js", "app.js"]) {
 
 writeFileSync(root + "index.html", html);
 console.log(`Built index.html with ${ranked.length} configurations.`);
+
